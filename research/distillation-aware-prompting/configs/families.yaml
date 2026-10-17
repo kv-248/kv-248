@@ -1,0 +1,289 @@
+# Model families for the controlled study: one teacher, many distilled students.
+# `objective` is the distillation objective family; `mode_seeking` is our prior
+# on its behaviour (reverse-KL / adversarial objectives are mode-seeking).
+# NFE per image = steps * (2 if cfg else 1). Guidance-distilled models (FLUX.1-dev)
+# take guidance as an input and use 1 NFE per step.
+# Entries marked `verify: true` have checkpoint filenames / sampler settings that
+# must be checked against the model card before a real run.
+
+sdxl:
+  - name: sdxl-base
+    role: teacher
+    base: stabilityai/stable-diffusion-xl-base-1.0
+    steps: 30
+    guidance_scale: 5.0
+    cfg: true
+    resolution: 1024
+    objective: none
+
+  - name: sdxl-turbo-1
+    role: student
+    base: stabilityai/sdxl-turbo
+    steps: 1
+    guidance_scale: 0.0
+    cfg: false
+    resolution: 512
+    objective: adversarial+score (ADD)
+    mode_seeking: true
+
+  - name: sdxl-turbo-4
+    role: student
+    base: stabilityai/sdxl-turbo
+    steps: 4
+    guidance_scale: 0.0
+    cfg: false
+    resolution: 512
+    objective: adversarial+score (ADD)
+    mode_seeking: true
+
+  - name: sdxl-lightning-4
+    role: student
+    base: stabilityai/stable-diffusion-xl-base-1.0
+    unet: {repo: ByteDance/SDXL-Lightning, file: sdxl_lightning_4step_unet.safetensors}
+    scheduler: {class: EulerDiscreteScheduler, kwargs: {timestep_spacing: trailing}}
+    steps: 4
+    guidance_scale: 0.0
+    cfg: false
+    resolution: 1024
+    objective: progressive+adversarial
+    mode_seeking: true
+
+  - name: dmd2-sdxl-4
+    role: student
+    base: stabilityai/stable-diffusion-xl-base-1.0
+    unet: {repo: tianweiy/DMD2, file: dmd2_sdxl_4step_unet_fp16.bin}
+    scheduler: {class: LCMScheduler}
+    steps: 4
+    guidance_scale: 0.0
+    cfg: false
+    resolution: 1024
+    call_kwargs: {timesteps: [999, 749, 499, 249]}
+    objective: reverse-KL distribution matching + GAN (DMD2)
+    mode_seeking: true
+
+  - name: lcm-sdxl-4
+    role: student
+    base: stabilityai/stable-diffusion-xl-base-1.0
+    unet: {repo: latent-consistency/lcm-sdxl, file: diffusion_pytorch_model.safetensors}
+    scheduler: {class: LCMScheduler}
+    steps: 4
+    guidance_scale: 8.0   # LCM embeds w; guidance_scale is the w-embedding input, still 1 NFE/step
+    cfg: false
+    resolution: 1024
+    objective: consistency distillation (LCM)
+    mode_seeking: false
+
+  - name: hyper-sdxl-4
+    role: student
+    base: stabilityai/stable-diffusion-xl-base-1.0
+    lora: {repo: ByteDance/Hyper-SD, file: Hyper-SDXL-4steps-lora.safetensors, scale: 1.0}
+    scheduler: {class: DDIMScheduler, kwargs: {timestep_spacing: trailing}}
+    steps: 4
+    guidance_scale: 0.0
+    cfg: false
+    resolution: 1024
+    objective: trajectory-segmented consistency + human feedback (Hyper-SD)
+    mode_seeking: false
+
+  - name: tcd-sdxl-4
+    role: student
+    base: stabilityai/stable-diffusion-xl-base-1.0
+    lora: {repo: h1t/TCD-SDXL-LoRA, file: pytorch_lora_weights.safetensors, scale: 1.0}
+    scheduler: {class: TCDScheduler}
+    steps: 4
+    guidance_scale: 0.0
+    cfg: false
+    resolution: 1024
+    call_kwargs: {eta: 0.3}
+    objective: trajectory consistency (TCD)
+    mode_seeking: false
+
+flux:
+  - name: flux-dev
+    role: teacher
+    base: black-forest-labs/FLUX.1-dev
+    steps: 28
+    guidance_scale: 3.5
+    cfg: false            # guidance-distilled: 1 NFE per step
+    resolution: 1024
+    objective: guidance distillation only
+
+  - name: flux-schnell-4
+    role: student
+    base: black-forest-labs/FLUX.1-schnell
+    steps: 4
+    guidance_scale: 0.0
+    cfg: false
+    resolution: 1024
+    call_kwargs: {max_sequence_length: 256}
+    objective: latent adversarial (LADD), distilled from FLUX.1-pro
+    mode_seeking: true
+    notes: teacher is FLUX.1-pro (closed), so dev->schnell is a sibling, not a strict teacher/student pair
+
+  - name: hyper-flux-8
+    role: student
+    base: black-forest-labs/FLUX.1-dev
+    lora: {repo: ByteDance/Hyper-SD, file: Hyper-FLUX.1-dev-8steps-lora.safetensors, scale: 0.125}
+    steps: 8
+    guidance_scale: 3.5
+    cfg: false
+    resolution: 1024
+    objective: trajectory-segmented consistency (Hyper-SD)
+    mode_seeking: false
+
+  - name: flux-turbo-alpha-8
+    role: student
+    base: black-forest-labs/FLUX.1-dev
+    lora: {repo: alimama-creative/FLUX.1-Turbo-Alpha, file: diffusion_pytorch_model.safetensors, scale: 1.0}
+    steps: 8
+    guidance_scale: 3.5
+    cfg: false
+    resolution: 1024
+    objective: adversarial (multi-head discriminator)
+    mode_seeking: true
+
+sd35:
+  - name: sd35-large
+    role: teacher
+    base: stabilityai/stable-diffusion-3.5-large
+    steps: 28
+    guidance_scale: 3.5
+    cfg: true
+    resolution: 1024
+    objective: none
+
+  - name: sd35-large-turbo-4
+    role: student
+    base: stabilityai/stable-diffusion-3.5-large-turbo
+    steps: 4
+    guidance_scale: 0.0
+    cfg: false
+    resolution: 1024
+    objective: latent adversarial (LADD)
+    mode_seeking: true
+
+qwen_image:
+  - name: qwen-image
+    role: teacher
+    base: Qwen/Qwen-Image
+    steps: 50
+    guidance_scale: 1.0
+    cfg: true
+    resolution: 1024
+    call_kwargs: {true_cfg_scale: 4.0, negative_prompt: " "}
+    objective: none
+
+  - name: qwen-image-lightning-8
+    role: student
+    base: Qwen/Qwen-Image
+    lora: {repo: lightx2v/Qwen-Image-Lightning, file: Qwen-Image-Lightning-8steps-V1.1.safetensors, scale: 1.0}
+    notes: Lightning LoRAs expect a specific FlowMatch shift config (see model card)
+    steps: 8
+    guidance_scale: 1.0
+    cfg: false
+    resolution: 1024
+    call_kwargs: {true_cfg_scale: 1.0}
+    objective: distribution matching (Lightning / DMD-style)
+    mode_seeking: true
+    verify: true
+
+# ---- vendor teacher/student pairs (production-relevant; one distillation method each) ----
+
+zimage:
+  - name: z-image
+    role: teacher
+    base: Tongyi-MAI/Z-Image
+    steps: 50
+    guidance_scale: 4.0
+    cfg: true
+    resolution: 1024
+    objective: none (pretrain+SFT, no RL)
+
+  - name: z-image-turbo
+    role: student
+    base: Tongyi-MAI/Z-Image-Turbo
+    steps: 9
+    nfe: 8                # 9 scheduler steps = 8 DiT forwards (model card)
+    guidance_scale: 0.0
+    cfg: false
+    resolution: 1024
+    objective: Decoupled-DMD + DMDR (RL)
+    mode_seeking: true
+    notes: distillation is confounded with RL; label as such
+
+flux2_klein:
+  - name: flux2-klein-base-4b
+    role: teacher
+    base: black-forest-labs/FLUX.2-klein-base-4B
+    steps: 50
+    guidance_scale: 4.0
+    cfg: true
+    resolution: 1024
+    objective: none (no step or guidance distillation)
+
+  - name: flux2-klein-4b
+    role: student
+    base: black-forest-labs/FLUX.2-klein-4B
+    steps: 4
+    guidance_scale: 1.0
+    cfg: false
+    resolution: 1024
+    objective: step + guidance distillation (vendor, undisclosed)
+    mode_seeking: true
+
+ernie_image:
+  - name: ernie-image
+    role: teacher
+    base: baidu/ERNIE-Image
+    steps: 50
+    guidance_scale: 4.0
+    cfg: true
+    resolution: 1024
+    objective: none (SFT)
+
+  - name: ernie-image-turbo
+    role: student
+    base: baidu/ERNIE-Image-Turbo
+    steps: 8
+    guidance_scale: 1.0
+    cfg: false
+    resolution: 1024
+    objective: DMD + RL
+    mode_seeking: true
+    verify: true
+
+qwen_image_21:
+  - name: qwen-image-2.1
+    role: teacher
+    base: Qwen/Qwen-Image-2.1
+    steps: 40
+    guidance_scale: 4.0
+    cfg: true
+    resolution: 1024
+    objective: none
+    verify: true
+    notes: official prompt enhancer Qwen/Qwen-Image-2.1-PE-T2I is demonstrated with this teacher
+
+  - name: qwen-image-2.1-turbo
+    role: student
+    base: Qwen/Qwen-Image-2.1-Turbo
+    steps: 8
+    guidance_scale: 1.0
+    cfg: false
+    resolution: 1024
+    objective: official 8-step acceleration (method undisclosed)
+    mode_seeking: true
+    verify: true
+    notes: checkpoint ships its own sigma schedule; num_inference_steps alone does not override it
+
+  - name: qwen-image-2.1-lightning-4
+    role: student
+    base: Qwen/Qwen-Image-2.1
+    lora: {repo: lightx2v/Qwen-Image-2.1-Lightning, file: pytorch_lora_weights.safetensors, scale: 1.0}
+    steps: 4
+    guidance_scale: 1.0
+    cfg: false
+    resolution: 1024
+    objective: DMD (LoRA)
+    mode_seeking: true
+    verify: true
