@@ -236,6 +236,24 @@ drifts generally (loss on its own answers rose from 0.87 to 1.06), so part of th
 may be generic drift. A matched-drift control is needed: a fine-tune that keeps EOS but drifts
 as much.
 
+**Behaviour of the UL-only model past the end (n=48 held-out prompts).** It never stops, and
+the phantom end is gone: no layer's logit lens ranks EOS top-1 at *any* position across up to
+448 generated tokens (UL + CE: ~100% at layers 13–21). Post-end text is 100% continuous
+elaboration, with no follow-up offers, sign-offs, or loops. Greedy overlap with the base answer
+is 2.6% of its length.
+
+**Closure side effects at other levels.**
+
+| | base (+ban) | UL + CE | UL only |
+|---|---|---|---|
+| List prompts that still get a bulleted list | 16/16 | 16/16 | 5/16 |
+| Mean sentence length (words) | 15.5 | 16.6 | 25.5 |
+| Outputs switching into Chinese | 2/48 | 7/48 | 0/48 |
+
+Without the anchor, removing the response-level stop also weakens sentence- and list-level
+endings. This is first evidence for a shared, hierarchical closure mechanism (Section 3, idea C
+and experiment E7), with the same drift caveat.
+
 This changes the paper's central question from "does removing EOS leave the decision intact?"
 to **"what determines whether a model diverts or delays when it loses the stop action?"**,
 which has a two-sided answer already visible in a 0.5B pilot. It also makes the naturalistic
