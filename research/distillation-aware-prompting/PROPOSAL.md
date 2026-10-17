@@ -1,23 +1,38 @@
-# Reword, Don't Reseed: Prompt Evolution Recovers What Diffusion Distillation Tempers Away
+# Reword, Don't Reseed: Prompt Evolution Across Distilled Diffusion Students
 
-*CVPR 2027 main-track proposal, **v3**, revised after two rounds of simulated review (6 reviews, plus 107 mined OpenReview threads). Deadlines (AoE): registration **Nov 10**, paper **Nov 16**, supplementary **Nov 23**.*
+*CVPR 2027 main-track proposal, **v3.1**, revised after three rounds of simulated review (8 reviews, plus 107 mined OpenReview threads). Deadlines (AoE): registration **Nov 10**, paper **Nov 16**, supplementary **Nov 23**.*
+*Round-3 verdict: presentable as a CVPR main idea. Stop revising and run the G1 pilot. Expected rating if the gates pass: about 4/6, rising to 5 if the held-out prediction works.*
 *This is a plan; no result below has been measured yet. Predictions are pre-registered, and Section 7 gives the gates and fallbacks.*
 
 ---
 
 ## 0. TL;DR
 
-**Takeaway.** *A distilled student decides its teacher's coin flips.* Prompts the teacher usually renders correctly become reliable on the student. Prompts the teacher renders only sometimes become reachable on the student, if at all, only through a lucky seed. **For students, the lever that still works is the wording: reword, don't reseed.**
+**Takeaway.** *A distilled student decides its teacher's coin flips.* Prompts the teacher usually renders correctly become reliable on the student. Prompts the teacher renders only sometimes stop being reachable by re-seeding. **For students, the lever that still works is the wording: reword, don't reseed.** The ledger measures how much of that lost reach rewording and evolution can bring back (re-addressed), and how much is gone (erased).
 
 We **fix a teacher** and study **prompt evolution across its distilled students**. This is the brief: "fix the model, try different distilled variants, see the effects of a prompt evolution strategy". The paper has three parts:
 
-1. **Measure: the reach ledger.** For every student we take the intents its teacher can render and ask which are reliable as worded, which can be made reliable by **rewording** (zero-feedback Reword-K, then student-in-the-loop evolution), and which re-seeding only touches by luck. Winners are always verified on fresh seeds by held-out judges. The same procedure on the teacher is the reference.
+1. **Measure: the reach ledger.** For every student we take the intents its teacher can render and sort them into four groups:
+   - reliable as worded;
+   - made reliable by **rewording** (zero-feedback Reword-K, then student-in-the-loop evolution);
+   - touched only by a lucky seed;
+   - lost within budget.
+   
+   The protocol:
+   - The original wording and the rewordings face the *same* fresh-seed test, scored by a held-out judge.
+   - A placebo re-test of the original wording gives the noise floor.
+   - Lucky images must pass a second judge.
+   - Shares are reported at thresholds 0.25, 0.5 and 0.75.
+   - The teacher's own ledger is the reference.
 2. **Explain and predict: the tempered-teacher law.** We fit logit q_S = β·logit q_T + b + σ·ε per student:
    - β: the student pushes the teacher's per-prompt success rates toward 0 or 1, in the teacher's order (*tempering*);
    - σ: prompt-specific deviations (*re-addressing*).
    
    The fit is within task type and judge-calibrated, and is checked against controls: teacher self-split, CFG-matched teacher, sharpened-but-not-distilled (DPO/SPO-SDXL), non-distilled few-step sibling, and a one-factor CFG pair. The variance of a student's wording effects is β²·Var_T + σ², so **the wording axis gains under both mechanisms**. The fitted (β, σ) **predict** each student's seed-vs-wording curves, tested on held-out students.
-3. **Act: distillation-aware prompt evolution.** One rule derived from the law (spend the budget on wordings, one seed each, on students) plus Pareto-over-checklist parents and a population output. Its zero-feedback corner is **Reword-K**, a single small-LLM call. We report the **student-minus-teacher gain at equal wall-clock** against seeds, pink noise, CADS, the hybrid teacher first step, the official enhancer and the teacher. The headline is this difference, not state of the art.
+3. **Act: distillation-aware prompt evolution.** One rule derived from the law (spend the budget on wordings, one seed each, on students) plus Pareto-over-checklist parents and a population output. Its zero-feedback corner is **Reword-K**, a single small-LLM call.
+   - **The mechanism claim is made at an equal number of candidates:** does rewording help the student more than it helps the teacher?
+   - **The deployment claim is made at equal wall-clock,** against seeds, equal-time seeds, pink noise, CADS, the hybrid teacher first step, the official enhancer and the teacher.
+   - The headline is the student-minus-teacher difference, not state of the art.
 
 ---
 
@@ -85,7 +100,7 @@ For an intent I, a wording c and a seed z, q(c) is the probability over seeds th
 | | Prediction | Status |
 |---|---|---|
 | **P1** | Seed gains shrink on intents with intermediate q_T | Algebra; reported as a consequence |
-| **P2** | Across wordings, Var_c logit q_S = β²·Var_c logit q_T + σ², so selection over wordings gains on students under *both* tempering and re-addressing, relative to the teacher | The interaction we test |
+| **P2** | Across wordings, Var_c logit q_S = β²·Var_c logit q_T + σ_W², so selection over wordings gains on students under *both* tempering and *wording-level* re-addressing, relative to the teacher. σ_W is identified from a wording × seed grid with a two-level fit (`fit_tempering_grid`): intent-level σ_I does not help wording search | The interaction we test |
 | **P3** | Fitness gets cheaper. q_S sits near 0/1, so one seed per candidate suffices on mode-seeking students; teachers need several. This turns the standard "single-sample fitness is unreliable" critique into a measured, model-dependent finding | Measured per model |
 | **P4** | Teacher-evolved wordings keep their sign on students, but top-1 agreement falls as σ grows | Tested with a 2×2 teacher-evolved / student-evolved swap |
 
@@ -188,11 +203,22 @@ FLUX-dev → schnell is a *sibling* pair (both come from pro), so we do not use 
 - A selected wording flagged by a checker LLM for adding content (a different model from the rewriter) does not count.
 - Bars are ordered by objective family, with the teacher's own bar as reference.
 
-**Prediction.** For mode-seeking students, much of the "reseed-only" mass on the teacher's bar moves to "reword/evolve" on the student's bar. The *re-addressed* share is large; the erased share is small. The budget curve (8, 16, 32, 64 renders) shows "lost" is a lower bound.
+**Prediction** (corrected in round 3; computed from each student's fitted law with `scripts/analyze.py predict` and committed *before* the ledger runs).
+
+At the 0.5 threshold with b ≈ 0, pure tempering leaves the set of reliable wordings unchanged: q_S ≥ ½ exactly when q_T ≥ ½. So tempering alone moves the teacher's *reseed-only* mass to *lost*. It does not move it to *reword*. The ledger therefore has two separable signatures:
+
+- **(i) Tempering.** The student's reseed-only share shrinks and its lost share grows, relative to the teacher.
+- **(ii) Re-addressing.** The reword and evolve rungs recover a share that grows with the wording spread s_w and with σ_W. This is "erased vs re-addressed", made quantitative.
+
+**Further outputs:**
+- **The 0.25 and 0.75 thresholds**, which show how the picture depends on what "reliable" means.
+- **Re-found vs re-addressed.** Of the intents rewording recovers, what fraction could a lucky seed also reach?
+- **An equal-budget lucky-reach estimate.**
+- **The budget curve** (8, 16, 32, 64 renders). It shows "lost" is a lower bound.
 
 ### 4.4 E3: allocation, prediction and transfer (Fig. 3b–c)
 
-**(b) Width × depth plane at equal wall-clock** (`scripts/search_scaling.py --axis seconds`, fresh seeds). One selector (the search judge) for every arm. Arms:
+**(b) Width × depth plane at an equal number of candidates** (`scripts/search_scaling.py --axis images`, fresh seeds; this carries the mechanism claim). The same runs are also plotted against wall-clock (`--axis seconds`) for deployment. At equal seconds a fast student gets more candidates, so a student that is merely faster than its teacher would "win" without any mechanism. One selector (the search judge) is used for every arm. Arms:
 
 - seeds (original wording);
 - wordings, both shared-seed and fresh-seed;
@@ -201,14 +227,17 @@ FLUX-dev → schnell is a *sibling* pair (both come from pro), so we do not use 
 - the teacher with seeds and with wordings;
 - the CFG-matched teacher.
 
-Reported:
-- **Headline:** the student-minus-teacher difference of (wording gain − seed gain), with a paired bootstrap CI over intents (`paired_interaction_ci`).
-- **Two metrics:** best-of-N coverage, and the **deployable fresh-seed rate of the chosen wording** (winner's-curse corrected).
+Reported (`scripts/analyze.py interaction`):
+- **Headline:** the student-minus-teacher difference with a paired bootstrap CI over intents, measured two ways:
+  - (1) on the **deployable fresh-seed rate of the chosen wording**, i.e. does rewording help the student more than the teacher? A chosen *seed* does not transfer to new seeds, so the seed arm's deployable gain is 0 by construction.
+  - (2) on best-of-N coverage, as (wording gain − seed gain).
+- **Gains are also reported separately for each arm,** so that a seed-axis collapse (already reported in 7+ papers) cannot carry the result alone.
 
 **Prediction test.**
-- From each student's E1 fit (β̂, σ̂) plus the teacher's wording statistics, `predict_scaling` forecasts its seed, wording and selection curves *before* any search on that student.
-- Validated leave-one-student-out across SDXL, and on klein and Z-Image as held-out families.
-- Compared against two trivial predictors: student pass@1, and E[q_S(1 − q_S)].
+- **Inputs.** Each student's E1 fit (β̂, σ̂ with per-task offsets) plus its two-level σ_I and σ_W from a wording × seed grid on **disjoint** intents. The teacher's wording statistics come from the *same* generator of wordings as the measured arm: Reword-K outputs, not random paraphrases.
+- **What is forecast:** the measured Reword-K and evolution arms on held-out intents (`analyze.py predict`).
+- **Validation:** held-out intents within each student, plus klein and Z-Image as held-out families. Leave-one-student-out is not meaningful, because no parameter is shared across students.
+- **Baselines:** curve-shaped trivial predictors, namely student pass@k, E[q_S(1 − q_S)], and the teacher's own curve.
 
 **(c) 2×2 transfer** on one pair per family. Wordings are evolved on the teacher or on the student, then evaluated on both. Prediction: transfer keeps its sign, and the student-evolved advantage grows with σ̂.
 
@@ -228,12 +257,13 @@ We therefore use ≥ 600 intents on SDXL and report CIs. If the success-space in
 
 - **Students:** SDXL-DMD2, klein-4B, Z-Image-Turbo.
 - **Prompts:** GenEval-2, DPG-hard and real user prompts (Pick-a-Pic).
-- **Rows:**
+- **Rows** (all implemented in `remedy_eval.py`):
   - i.i.d. seeds;
   - **equal-time seeds** (Reword-K's LLM time re-spent on extra seeds, K selected);
   - pink noise;
-  - CADS;
-  - hybrid teacher-first-step;
+  - CADS (condition annealing on SDXL text embeddings);
+  - hybrid teacher-first-step (the teacher denoises the first 25% of the schedule; latent handed to the student);
+  - an OPT2I/RAISE-style configuration of the same loop (teacher-style allocation: 4 seeds per candidate, top-fitness parents), so the distillation-aware rule is isolated;
   - **no-LLM composition tags**;
   - the official/teacher-built PE (its latency counted);
   - generic diverse expansion (Prompt-Expansion-style);
@@ -288,6 +318,8 @@ The method is `dap/evolve.py`; its zero-feedback corner is `dap/reword.py`.
 | PRIS CVPR'26; RAISE CVPR'26; ReflectionFlow ICCV'25; GenPilot; OPT2I; RATTPO; Noise Hypernetworks NeurIPS'25 | Test-time prompt or noise search on single models. We test the *student-minus-teacher* interaction with one selector at equal seconds, and explain the RATTPO/RAISE observations on distilled backbones. |
 | POET ECCV'26; PromptEnhancer CVPR'26; APE; PE-OPSD; Prompt Expansion ACL'24; PAG CVPR'25 | Trained rewriters and enhancers. Ours is zero-shot and evolution-based, derived from the law, and evaluated against the official PE and generic expansion. |
 | Verbalized Sampling arXiv'25 | Prior art for jointly decoding a diverse list. We apply it to T2I wordings under an intent-preservation constraint and ablate it. |
+| StyleForge arXiv 2610.05066; Velocity corrector for Z-Image-Turbo arXiv 2610.12899 | Wording-based or tiny model-side fixes for step-distilled models. Concurrent; the corrector is a model-side baseline on the same student. |
+| SHIP arXiv 2608.21748; Progressive Seed Pruning arXiv 2607.21591 | Calibrated selection on held-out prompts; seed-axis pruning. Inform our "reliable" definition and seed-side baselines. |
 | Yue et al. NeurIPS'25; Ge et al. arXiv 2608.11829 (reverse-KL OPD: small-K pass@K ↑, large-K ↓); Huang et al. ICLR'25; Karan & Du | The LLM analogue. We give the diffusion-distillation version, with a per-prompt estimator, controls and a prompt-side remedy. |
 | Diffusion-DPO; SPO | Used as "sharpened but not distilled" controls. |
 
@@ -303,8 +335,8 @@ The method is `dap/evolve.py`; its zero-feedback corner is `dap/reword.py`.
 
 | Gate | Date | Criterion | If it fails |
 |---|---|---|---|
-| **G1** | Oct 24 | On SDXL {teacher, DMD2, Lightning, LCM}, 150 intents: (a) the deployable interaction CI excludes 0 for ≥ 2 mode-seeking students; (b) evolution makes ≥ 25% of the student's lost reach reliable (fresh seeds, held-out judge). β is **reported, not gating** | (b) only: a reachability paper (title option 3). Neither: ICCV'27 |
-| **G2** | Nov 3 | The ledger replicates on klein, and evolution or Reword-K beats equal-time seeds with the same selector on ≥ 2/3 students | Submit only if E1 and E2 are strong; otherwise ICCV |
+| **G1** | Oct 24 | On SDXL {teacher, DMD2, Lightning, LCM}, 150 intents, **direction only** (z ≈ 1 at 150 intents, so no CI test yet). (a) Rewording's deployable gain is larger on ≥ 2 mode-seeking students than on the teacher, at equal candidate count. (b) After subtracting the placebo floor, the reword and evolve rungs recover a non-zero share of the intents that are reseed-only or lost for the student but teacher-reachable. β is **reported, not gating** | (b) only: a reachability paper (title option 3). Neither: ICCV'27 |
+| **G2** | Nov 3 | At ≥ 600 intents: the interaction CI excludes 0 for ≥ 2 students; the ledger replicates on klein; evolution or Reword-K beats equal-time seeds with the same selector on ≥ 2/3 students | Submit only if E1 and E2 are strong; otherwise ICCV |
 | **G3** | Nov 6 | Human 2AFC complete | Report as a limitation |
 
 **Readings of the (β, σ) plane**, all publishable because the ledger carries the paper:
@@ -315,10 +347,11 @@ The method is `dap/evolve.py`; its zero-feedback corner is `dap/reword.py`.
 | β ≈ 1, large σ | Students re-address prompts: "prompts don't distill" (title 2) |
 | β ≈ w*-teacher | Distillation ≈ extra guidance, which is itself a useful calibration |
 
-**Titles:**
-1. *Reword, Don't Reseed: Prompt Evolution Recovers What Diffusion Distillation Tempers Away*
-2. *Reword, Don't Reseed: Distilled Diffusion Students Move Their Teacher's Reach from Seeds to Words*
-3. *A Reachability Study of Prompt Evolution Across Distilled Diffusion Students*
+**Titles** (working title neutral until G2):
+1. *Reword, Don't Reseed: Prompt Evolution Across Distilled Diffusion Students* (working title)
+2. If the re-addressed share is large: *Reword, Don't Reseed: Prompt Evolution Recovers What Diffusion Distillation Tempers Away*
+3. If students mostly move reach from seeds to words: *Reword, Don't Reseed: Distilled Diffusion Students Move Their Teacher's Reach from Seeds to Words*
+4. Reachability-only outcome: *A Reachability Study of Prompt Evolution Across Distilled Diffusion Students*
 
 ---
 
@@ -378,19 +411,23 @@ Fallback: ICCV 2027 (around Mar 5–8). CVPR decisions (Feb 25) come before it.
 |---|---|---|---|---|
 | 1 | v1 ("Distillation is sharpening" + DAPPER) | 3 / 3 / AC 3 | Binomial β biased; CFG/RL confounds; P2 and P5 tautological; DAPPER not novel (APE, SetPO); circular metrics; NFE-only budgets; 3 papers in one | (β, σ) GLMM; controls; retitled; cut GRPO and families; wall-clock accounting (v2) |
 | 2 | v2 ("Reword, Don't Reseed: tempered teachers") | 3 / 3 / AC 4 | Drifted from the brief (evolution sidelined); "flip" is a σ effect and shared seeds manufacture it; task-mix confound; no sharpened-not-distilled control; Deming and joint-cluster tests misleading; Reword-K ≈ expansion; equal-K not equal-time; coverage unsound; small success-space effects | Ledger with evolution as instrument and method; interaction not flip; within-task β; DPO/SPO and PCM controls; teacher-defined modes; fresh seeds; Naeem coverage; equal-time seeds, tags and teacher+Reword-K rows; prediction test; honest power analysis (v3) |
+| 3 | v3 (ledger + law + allocation) | 3 / AC 4 ("presentable; stop revising, run G1") | Ledger evolution bug (re-tested the failed wording, stopped at the first single-seed success); 0.5 threshold cannot see tempering (lucky → lost, not → reword); placebo/noise floor; unequal tests and tries; σ level (intent vs wording); speed confounds the equal-seconds interaction; prediction partly circular; baselines not implemented | Fixed and regression-tested evolution; equal fresh-seed tests, placebo re-test, second-judge lucky images, thresholds, equal-budget lucky estimate; corrected ledger prediction pre-registered from the law; two-level σ fit; mechanism claim at equal candidate count; per-task, held-out-intent predictions of the measured arms; CADS, hybrid, detector judge and OPT2I-style ablation implemented (v3.1) |
 
 ## Appendix B: Code map
 
 | Element | Code |
 |---|---|
 | Law + controls (Table 1) | `scripts/sharpening.py` (within-task GLMM, brackets, self-split, CFG-matched fits, disjoint seeds, judge ε); `dap/metrics.py::fit_tempering`, `self_split_control`, `teacher_mode_counts`, `fit_mode_tempering` |
-| Ledger (Fig. 2) | `scripts/reach_ledger.py` |
+| Ledger (Fig. 2) | `scripts/reach_ledger.py` (placebo, equal tests, thresholds, `--verify-judge`, `--teacher-candidate-seeds`) |
+| Interaction CIs and pre-registered predictions | `scripts/analyze.py interaction` / `predict`; `dap/metrics.py::fit_tempering_grid`, `predict_ledger`, `predict_scaling` |
+| Judge-independent GenEval scoring | `dap/geneval_judge.py` (`--eval-judge geneval`) |
+| Noise-side baselines | `dap/generation.py` (`noise="pink" / "cads"`, `hybrid_teacher_first`) |
 | Width × depth, interaction, prediction (Fig. 3b) | `scripts/search_scaling.py --axis seconds` (fresh-seed wording arms, teacher arms, `--teacher-cfg`, winner's-curse re-scoring); `dap/metrics.py::paired_interaction_ci`, `predict_scaling` |
 | Transfer and variance (Fig. 3c, supplement) | `scripts/variance.py` → `portability.py`, `amplification.py` |
 | Deployment (Table 2) | `scripts/remedy_eval.py`, `dap/reword.py` |
 | Method | `dap/evolve.py` (allocation, Pareto parents, population output) |
 | Toy and simulations | `scripts/toy_tempering.py`; `tests/test_metrics.py` |
-| Tests | `pytest -q tests`: 31 tests, CPU, tiny random SDXL built from configs |
+| Tests | `pytest -q tests`: 36 tests, CPU, tiny random SDXL built from configs |
 
 ## Appendix C: References (verified on arXiv / model cards)
 
@@ -401,6 +438,7 @@ Fallback: ICCV 2027 (around Mar 5–8). CVPR decisions (Feb 25) come before it.
   - DefaultShift, arXiv:2608.21784. Decomposable Probe, arXiv:2607.03256.
   - Starodubcev et al., CVPR'24, arXiv:2312.10835. Diversity-Rewarded CFG Distillation, arXiv:2410.06084.
 - **Seeds and diversity measurement:** Good Seed, arXiv:2405.14828. Reliable Random Seeds, ICLR'25. W1KP, arXiv:2406.08482. SliderSpace, arXiv:2502.01639. Scendi / Conditional Vendi.
+- **Concurrent (Aug–Oct 2026):** StyleForge, arXiv:2610.05066. Velocity corrector for Z-Image-Turbo, arXiv:2610.12899. SHIP, arXiv:2608.21748. Progressive Seed Pruning, arXiv:2607.21591.
 - **Test-time search and prompting:** PRIS, CVPR'26, arXiv:2512.03534. RAISE, CVPR'26, arXiv:2603.00483. ReflectionFlow, ICCV'25, arXiv:2504.16080. GenPilot, arXiv:2510.07217. OPT2I, TMLR'24, arXiv:2403.17804. RATTPO, arXiv:2506.16853. Noise Hypernetworks, NeurIPS'25. ReNO, NeurIPS'24, arXiv:2406.04312.
 - **Rewriters and enhancers:** POET, ECCV'26, arXiv:2510.12041. PromptEnhancer, CVPR'26. APE, arXiv:2606.00204. PE-OPSD, arXiv:2609.36638. Prompt Expansion, ACL'24. PAG, CVPR'25. Verbalized Sampling, arXiv:2510.01171.
 - **Sharpening in LLMs:** Yue et al., NeurIPS'25. Ge et al., arXiv:2608.11829. Huang et al., arXiv:2412.01951. Karan & Du, arXiv:2510.14901. SetPO, arXiv:2602.01062. Max@K RL, arXiv:2607.14962.

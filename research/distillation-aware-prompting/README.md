@@ -19,7 +19,9 @@ noise-side and prompt-side baselines at equal wall-clock.
 | `dap/reword.py` | **Reword-K** (K jointly diverse, intent-preserving rewordings in one LLM call), generic K-expansion control, attribute-injection check. |
 | `dap/evolve.py` | DAPE test-time loop with NFE budget, early stopping, optional teacher-reference precision term and facility-location prompt-mixture selection (`coverage_subset`). |
 | `dap/search.py` | Compute-matched baselines: noise best-of-N, paraphrase best-of-N, DAPE. |
-| `scripts/reach_ledger.py` | **Main figure**: per-student reach ledger (original / Reword-K / evolution / reseed-only / lost), winners verified on fresh seeds by a held-out judge, injection-filtered. |
+| `scripts/reach_ledger.py` | **Main figure**: per-student reach ledger (original / Reword-K / evolution / reseed-only / lost) with equal fresh-seed tests, a placebo noise floor, thresholds 0.25/0.5/0.75, second-judge lucky images, injection filter. |
+| `scripts/analyze.py` | Paired student-minus-teacher interaction CIs from search runs; pre-registered per-task predictions (curves + ledger) from E1 and the wording grid. |
+| `dap/geneval_judge.py` | GenEval-protocol detector judge (`--eval-judge geneval`). |
 | `scripts/sharpening.py` | **E1**: per-prompt success over seeds for a teacher and its students; (β, σ) with bootstrap CIs, binomial/beta-binomial brackets, pass@k, teacher self-split and CFG-matched-teacher controls (`--teacher-cfgs`), per-model judge confusion (`--judge-eps`, `--judge-eps-student`). Saves images in the GenEval layout. |
 | `scripts/variance.py` | **E2 grid**: wording × seed grids per model (embeddings, success, soft scores), variance decomposition, seed-set vs wording-set diversity. |
 | `scripts/portability.py` | E2 analysis: wording-rank transfer, proxy regret, seed-rank transfer and same-seed image coupling (student vs teacher). |
@@ -74,7 +76,7 @@ CPU-only; they build a randomly initialised tiny SDXL pipeline from config files
 download) and check generation, NFE accounting, evolution, and all three scripts end to end.
 
 ```bash
-pytest -q tests          # 31 tests, ~5 min on CPU
+pytest -q tests          # 36 tests, ~4 min on CPU
 ```
 
 Entries marked `verify: true` in `configs/families.yaml` need their checkpoint filenames and
