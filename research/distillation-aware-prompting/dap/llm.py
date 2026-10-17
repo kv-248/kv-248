@@ -56,3 +56,23 @@ class ScriptedLLM:
 
     def usage(self) -> dict:
         return {"calls": self.calls}
+
+
+class EchoLLM:
+    """Offline LLM for end-to-end smoke tests of the scripts: returns simple variants of the user
+    message as a JSON list (or all-false flags for checker prompts)."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def chat(self, messages, temperature: float = 0.8, max_tokens: int = 1024, n: int = 1):
+        import json
+
+        self.calls += 1
+        system = next((m["content"] for m in messages if m["role"] == "system"), "")
+        user = messages[-1]["content"].splitlines()[0].split(": ", 1)[-1]
+        out = json.dumps([False] * 8) if "booleans" in system else json.dumps([f"{user} (v{i})" for i in range(8)])
+        return out if n == 1 else [out] * n
+
+    def usage(self) -> dict:
+        return {"calls": self.calls}

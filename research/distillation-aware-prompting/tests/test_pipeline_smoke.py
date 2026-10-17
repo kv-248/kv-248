@@ -41,11 +41,12 @@ def test_evolve_respects_budget(tiny_config, geneval_file):
     assert all(c.op in ("original", "rule") for c in res_rule.history)
 
 
-def _run(script, *args):
+def _run(script, *args, check=True):
     r = subprocess.run([sys.executable, "-W", "ignore", str(ROOT / "scripts" / script), *args],
                        capture_output=True, text=True, cwd=ROOT)
-    assert r.returncode == 0, r.stderr[-3000:]
-    return r.stdout
+    if check:
+        assert r.returncode == 0, r.stderr[-3000:]
+    return r.stdout + r.stderr
 
 
 def test_sharpening_script(tiny_config, geneval_file, tmp_path):
@@ -148,3 +149,23 @@ def test_pink_noise_statistics():
     x = pink_noise((4, 32, 32), seed=1)
     assert x.shape == (4, 32, 32) and abs(float(x.mean())) < 1e-4 and abs(float(x.std()) - 1) < 0.02
     assert (pink_noise((4, 32, 32), seed=1) == x).all()
+
+
+def test_reword_evolve_population(tiny_config, geneval_file, tmp_path):
+    from dap.embed import pixel_embed
+    from dap.evolve import select_population
+
+    gen = _gen(tiny_config, "tiny-student")
+    intent = load_geneval(geneval_file, tags=["color_attr"])[0]
+    llm = ScriptedLLM(['["purple wine glass beside a black apple", "a black apple next to a purple wine glass"]'])
+    cfg = EvolveConfig(budget_nfe=6, init_prompts=("v1 " + intent.prompt, "v2 " + intent.prompt), target_successes=3)
+    res = evolve(intent, gen, MockJudge(), llm, cfg, embed_fn=pixel_embed)
+    assert [c.op for c in res.history[:3]] == ["original", "init", "init"]
+    pop = select_population(res, 3)
+    assert len(pop) == min(3, len(res.history)) and len({c.prompt for c in pop}) == len(pop)
+    _run("remedy_eval.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
+         "--geneval-meta", geneval_file, "--methods", "seeds", "reword", "expand", "para", "evolve", "--k", "2",
+         "--n-ref", "2", "--search-judge", "mock", "--evolve-images", "4", "--llm", "echo",
+         "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path / "e5e"))
+    s = json.loads((tmp_path / "e5e" / "summary.json").read_text())
+    assert set(s) == {"seeds", "reword", "expand", "para", "evolve"} and s["reword"]["injection_rate"] == 0.0

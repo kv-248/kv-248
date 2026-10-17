@@ -72,6 +72,8 @@ class EvolveConfig:
     keep_images: bool = False
     rng_seed: int = 0
     ref_weight: float = 0.0  # weight of teacher-reference precision in the fitness
+    init_prompts: tuple[str, ...] = ()  # e.g. a Reword-K set, evaluated right after the original
+    target_successes: int = 1  # early stop once this many candidates satisfy the checklist
 
 
 @dataclass
@@ -131,8 +133,16 @@ def evolve(intent: Intent, generator, judge, llm=None, cfg: EvolveConfig | None 
         usage = llm.usage() if llm is not None and hasattr(llm, "usage") else {}
         return EvolveResult(best, history, generator.nfe - start, solved, usage)
 
-    root = evaluate(intent.prompt, "original", None)
-    if root.success_rate == 1.0 and cfg.early_stop:
+    def done() -> bool:
+        return cfg.early_stop and sum(c.success_rate == 1.0 for c in history) >= cfg.target_successes
+
+    evaluate(intent.prompt, "original", None)
+    for prompt in cfg.init_prompts:
+        if done() or not budget_left():
+            break
+        if prompt not in seen:
+            evaluate(prompt, "init", 0)
+    if done():
         return result(True)
 
     while budget_left():
@@ -158,8 +168,8 @@ def evolve(intent: Intent, generator, judge, llm=None, cfg: EvolveConfig | None 
                 break
             if prompt in seen:
                 continue
-            cand = evaluate(prompt, op, pi)
-            if cand.success_rate == 1.0 and cfg.early_stop:
+            evaluate(prompt, op, pi)
+            if done():
                 return result(True)
     return result(max(c.success_rate for c in history) == 1.0)
 
@@ -200,3 +210,16 @@ def coverage_subset(cands: list[Candidate], teacher_embs, k: int) -> list[int]:
         chosen.append(j)
         best = np.maximum(best, sim[:, j])
     return chosen
+
+
+def select_population(res: EvolveResult, k: int) -> list[Candidate]:
+    """K output wordings from an evolution run: mutually distinct successful candidates (farthest
+    point on their student-image embeddings, no teacher needed), topped up by fitness."""
+    succ = res.successes()
+    chosen: list[Candidate] = []
+    if succ and all(c.emb is not None for c in succ):
+        chosen = [succ[i] for i in diverse_subset(succ, [c.emb for c in succ], k)]
+    else:
+        chosen = sorted(succ, key=lambda c: c.fitness, reverse=True)[:k]
+    rest = [c for c in sorted(res.history, key=lambda c: c.fitness, reverse=True) if c not in chosen]
+    return (chosen + rest)[:k]

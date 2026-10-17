@@ -8,6 +8,9 @@ latency column is the real deployment cost (LLM call + K generations). Methods:
   expand  : K generic diverse LLM expansions (Prompt-Expansion-style control)
   para    : K random meaning-preserving paraphrases
   reword  : Reword-K, one joint call for K intent-preserving rewordings (the proposed remedy)
+  evolve  : Reword-Evolve, student-in-the-loop evolution initialised with Reword-K, returning K
+            distinct successful wordings (needs --search-judge, which must differ from the
+            evaluation judges; its time is part of the latency)
   teacher : the teacher, original prompt, K seeds                      (reference, at its own cost)
 Metrics per method: mean success and pass@K under held-out evaluation judges, Vendi and mean
 pairwise distance, teacher coverage (success-filtered teacher samples for the ORIGINAL prompt, in
@@ -33,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from dap import make_judge, make_llm  # noqa: E402
 from dap.embed import ImageEmbedder, pixel_embed  # noqa: E402
+from dap.evolve import EvolveConfig, evolve, select_population  # noqa: E402
 from dap.generation import CONFIG_PATH, Generator, get_variant, teacher_of  # noqa: E402
 from dap.judges import score_intent  # noqa: E402
 from dap.metrics import mean_pairwise_distance, teacher_coverage, vendi_score  # noqa: E402
@@ -40,7 +44,7 @@ from dap.questions import load_geneval  # noqa: E402
 from dap.reword import attribute_injection, expand_k, reword_k  # noqa: E402
 from dap.rewrite import paraphrase  # noqa: E402
 
-REWRITE_METHODS = {"pe", "expand", "para", "reword"}
+REWRITE_METHODS = {"pe", "expand", "para", "reword", "evolve"}
 
 
 def method_prompts(method, intent, k, llm, pe_rewrites):
@@ -75,6 +79,8 @@ def main():
     ap.add_argument("--llm")
     ap.add_argument("--pe-rewrites")
     ap.add_argument("--eval-judges", nargs="+", default=["mock"])
+    ap.add_argument("--search-judge", help="judge used inside Reword-Evolve (never an evaluation judge)")
+    ap.add_argument("--evolve-images", type=int, default=16, help="Reword-Evolve budget in student images")
     ap.add_argument("--embedder", default="pixel")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--device", default="cuda")
@@ -87,6 +93,7 @@ def main():
     intents = load_geneval(args.geneval_meta, limit=args.limit, tags=args.tags)
     llm = make_llm(args.llm)
     judges = [make_judge(j, device=args.device) for j in args.eval_judges]
+    search_judge = make_judge(args.search_judge, device=args.device) if args.search_judge else None
     embed = pixel_embed if args.embedder == "pixel" else ImageEmbedder(args.embedder, device=args.device)
     pe = json.loads(Path(args.pe_rewrites).read_text()) if args.pe_rewrites else {}
     student = Generator(get_variant(args.student, args.config), args.device, args.dtype).load()
@@ -101,9 +108,18 @@ def main():
         ref_ok = [s["success"] for s in score_intent(judges[0], ref_imgs, intent)]
         for method in [m for m in args.methods if m != "pe" or pe]:
             t0 = time.perf_counter()
-            prompts = method_prompts(method, intent, k, llm, pe)
-            gen = teacher if method == "teacher" else student
-            imgs = gen.generate(prompts, seeds, noise="pink" if method == "pink" else "white")
+            if method == "evolve":
+                if search_judge is None or llm is None:
+                    raise SystemExit("evolve needs --search-judge and --llm")
+                cfg = EvolveConfig(budget_nfe=args.evolve_images * student.spec.nfe_per_image, seeds=(args.seed,),
+                                   keep_images=True, init_prompts=tuple(reword_k(llm, intent.prompt, k)),
+                                   target_successes=k)
+                pop = select_population(evolve(intent, student, search_judge, llm, cfg, embed_fn=embed), k)
+                prompts, imgs = [c.prompt for c in pop], [c.images[0] for c in pop]
+            else:
+                prompts = method_prompts(method, intent, k, llm, pe)
+                gen = teacher if method == "teacher" else student
+                imgs = gen.generate(prompts, seeds, noise="pink" if method == "pink" else "white")
             latency = time.perf_counter() - t0
             emb = np.asarray(embed(imgs))
             ev = {j.name: score_intent(j, imgs, intent) for j in judges}

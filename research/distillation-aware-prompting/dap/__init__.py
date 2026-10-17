@@ -19,11 +19,13 @@ def make_judge(spec: str, device: str = "cuda"):
 
 
 def make_llm(spec: str | None):
-    """None | 'openai:<model>@<base_url>'"""
-    from .llm import ChatLLM
+    """None | 'echo' (offline smoke tests) | 'openai:<model>@<base_url>'"""
+    from .llm import ChatLLM, EchoLLM
 
     if not spec:
         return None
+    if spec == "echo":
+        return EchoLLM()
     kind, _, rest = spec.partition(":")
     if kind != "openai":
         raise ValueError(f"unknown llm spec {spec!r}")
