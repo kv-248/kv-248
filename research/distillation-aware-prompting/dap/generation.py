@@ -107,8 +107,10 @@ class Generator:
         unet.load_state_dict(state)
         return unet.to(torch_dtype)
 
-    def generate(self, prompts: list[str], seeds: list[int], resolution: int | None = None):
-        """One image per (prompt, seed) pair. Returns a list of PIL images."""
+    def generate(self, prompts: list[str], seeds: list[int], resolution: int | None = None, noise: str = "white"):
+        """One image per (prompt, seed) pair. Returns a list of PIL images.
+        noise="pink": seed-determined 1/f initial latents (UNet latent pipelines only), a cheap
+        noise-side diversity baseline."""
         import torch
 
         assert len(prompts) == len(seeds)
@@ -116,6 +118,12 @@ class Generator:
             self.load()
         res = resolution or self.spec.resolution
         gens = [torch.Generator(device="cpu").manual_seed(int(s)) for s in seeds]
+        extra = {}
+        if noise == "pink":
+            if not hasattr(self.pipe, "unet"):
+                raise NotImplementedError("pink-noise latents are implemented for UNet (SDXL-family) pipelines")
+            shape = (self.pipe.unet.config.in_channels, res // self.pipe.vae_scale_factor, res // self.pipe.vae_scale_factor)
+            extra["latents"] = torch.stack([pink_noise(shape, int(s)) for s in seeds]).to(self.device, self.pipe.unet.dtype)
         out = self.pipe(
             prompt=list(prompts),
             generator=gens,
@@ -123,6 +131,7 @@ class Generator:
             guidance_scale=self.spec.guidance_scale,
             height=res,
             width=res,
+            **extra,
             **self.spec.call_kwargs,
         ).images
         self.nfe += self.spec.nfe_per_image * len(prompts)
@@ -134,3 +143,18 @@ class Generator:
         for i in range(0, len(prompts), batch_size):
             images += self.generate(prompts[i : i + batch_size], seeds[i : i + batch_size], **kw)
         return images
+
+
+def pink_noise(shape: tuple[int, int, int], seed: int, alpha: float = 1.0):
+    """Unit-variance Gaussian noise with a 1/f^alpha spatial spectrum (per channel)."""
+    import torch
+
+    g = torch.Generator().manual_seed(seed)
+    c, h, w = shape
+    white = torch.randn(shape, generator=g)
+    fy = torch.fft.fftfreq(h)[:, None]
+    fx = torch.fft.rfftfreq(w)[None, :]
+    scale = (fx ** 2 + fy ** 2).sqrt().clamp(min=1.0 / max(h, w)) ** (-alpha / 2)
+    x = torch.fft.irfft2(torch.fft.rfft2(white) * scale, s=(h, w))
+    x = (x - x.mean(dim=(1, 2), keepdim=True)) / x.std(dim=(1, 2), keepdim=True)
+    return x

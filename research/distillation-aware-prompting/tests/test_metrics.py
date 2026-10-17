@@ -92,7 +92,7 @@ def test_fit_tempering_judge_noise_correction():
     qS = expit(3.0 * logit(np.clip(qT, 1e-4, 1 - 1e-4)))
     cT = rng.binomial(16, e0 + (1 - e0 - e1) * qT)
     cS = rng.binomial(16, e0 + (1 - e0 - e1) * qS)
-    naive = fit_tempering(cT, 16, cS, 16)["beta"]
+    naive = fit_tempering(cT, 16, cS, 16, model="binomial")["beta"]
     corrected = fit_tempering(cT, 16, cS, 16, eps=(e0, e1))["beta"]
     assert abs(corrected - 3.0) < 0.6 and abs(corrected - 3.0) < abs(naive - 3.0), (naive, corrected)
 
@@ -128,3 +128,22 @@ def test_portability_prompt_vs_seed():
     assert r["proxy_regret"] < r["random_pick_regret"] and abs(r["seed_coupling"]) < 0.05
     r2 = portability(soft_T, soft_S, emb_T=z, emb_S=z + 0.1 * rng.normal(size=z.shape))
     assert r2["seed_coupling"] > 0.5
+
+
+def test_random_effects_fit_separates_sharpening_from_prompt_noise():
+    from scipy.special import expit, logit
+
+    from dap.metrics import fit_tempering, self_split_control
+
+    rng = np.random.default_rng(6)
+    for beta, sig in [(1.0, 1.5), (1.5, 0.0)]:
+        qT = np.clip(rng.beta(0.6, 0.5, 553), 1e-4, 1 - 1e-4)
+        cT = rng.binomial(16, qT)
+        cS = rng.binomial(16, expit(beta * logit(qT) + rng.normal(0, sig, 553)))
+        est = fit_tempering(cT, 16, cS, 16)
+        assert abs(est["beta"] - beta) < 0.2, est
+        assert abs(est["sigma"] - sig) < 0.4, est
+    qT = rng.beta(0.6, 0.5, 400)
+    succ = rng.uniform(size=(400, 32)) < qT[:, None]
+    ctl = self_split_control(succ)
+    assert abs(ctl["beta"] - 1) < 0.2 and ctl["sigma"] < 0.4, ctl

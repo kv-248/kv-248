@@ -156,21 +156,23 @@ def _log_betabinom_lik(c, n, m, rho):
 
 def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
                   eps: tuple[float, float] = (0.0, 0.0), eps_S: tuple[float, float] | None = None,
-                  overdispersion: bool = False) -> dict:
-    """Errors-in-variables MLE of the effective sharpening exponent beta (and offset b) in
-    logit q_S = beta * logit q_T + b.
+                  model: str = "re", n_herm: int = 12) -> dict:
+    """Errors-in-variables MLE of the tempered-teacher model
 
-    * The teacher's per-prompt rate is latent (posterior on a logit grid, `teacher_posterior`) and
-      integrated out, so few seeds or rates near 0/1 do not attenuate beta.
-    * Judge confusion (false-positive, false-negative) can differ between models: `eps` is used
-      for the teacher and `eps_S` (default: same) for the student. Estimate both from human labels;
-      a judge that is more decisive on clean student images otherwise inflates beta.
-    * `overdispersion=True` models student counts as beta-binomial with intra-prompt correlation
-      rho. Seed-determinism (near-identical images, hence repeated judge verdicts) is then absorbed
-      by rho instead of beta: collapse onto an *arbitrary* mode gives beta ~ 1 with rho -> 1, while
-      collapse onto the teacher's *dominant* mode gives beta > 1.
-    beta is a phenomenological effective temperature; under exact mode tempering the offset is
-    prompt-dependent, b = (1 - beta) [H_beta(success modes) - H_beta(failure modes)].
+        logit q_S(c) = beta * logit q_T(c) + b + sigma * e_c,   e_c ~ N(0, 1)
+
+    beta  : effective sharpening exponent (phenomenological temperature; beta > 1 = tempering);
+    sigma : prompt-specific student deviations ("the student re-addresses prompts"). Under exact
+            mode tempering b is itself prompt-dependent, b_c = (1 - beta)[H_beta(success modes) -
+            H_beta(failure modes)], which sigma absorbs.
+
+    * The teacher's per-prompt rate is latent (`teacher_posterior`) and integrated out, so few seeds
+      or rates near 0/1 do not attenuate beta (a naive logit regression does).
+    * Judge confusion (false-positive, false-negative) may differ by model: `eps` for the teacher,
+      `eps_S` for the student (default: same); estimate both from hand labels.
+    * model="re" (default): the logit-normal random effect above, integrated by Gauss-Hermite.
+      Without it, prompt-specific student errors bias beta upward under a binomial likelihood and
+      downward under a beta-binomial one, so "binomial" and "betabinom" are reported only as brackets.
     """
     from scipy.optimize import minimize
     from scipy.special import expit, logsumexp
@@ -179,20 +181,48 @@ def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
     s0, s1 = eps_S if eps_S is not None else eps
     cS = np.asarray(cS)
     post, prior = teacher_posterior(cT, nT, eps)
-    log_post = np.log(post + 1e-300)
+    keep = post.max(0) > 1e-10
+    U, log_post = _U[keep], np.log(post[:, keep] + 1e-300)
 
-    def nll(theta):
-        m = s0 + (1 - s0 - s1) * expit(theta[0] * _U + theta[1])
-        ll = _log_betabinom_lik(cS, nS, m, expit(theta[2])) if overdispersion else _log_binom_lik(cS, nS, m)
-        return -np.sum(logsumexp(log_post + ll, axis=1))
+    if model == "re":
+        hx, hw = np.polynomial.hermite_e.hermegauss(n_herm)
+        log_hw = np.log(hw / hw.sum())
 
-    x0 = [1.0, 0.0] + ([-2.0] if overdispersion else [])
+        def nll(theta):
+            b1, b2, log_sig = theta
+            eta = b1 * U[:, None] + b2 + np.exp(log_sig) * hx[None, :]  # nodes x hermite
+            m = (s0 + (1 - s0 - s1) * expit(eta)).reshape(-1)
+            ll = _log_binom_lik(cS, nS, m).reshape(len(cS), len(U), n_herm) + log_hw
+            return -np.sum(logsumexp(log_post + logsumexp(ll, axis=2), axis=1))
+
+        x0 = [1.0, 0.0, np.log(0.3)]
+    elif model in ("binomial", "betabinom"):
+        def nll(theta):
+            m = s0 + (1 - s0 - s1) * expit(theta[0] * U + theta[1])
+            ll = _log_betabinom_lik(cS, nS, m, expit(theta[2])) if model == "betabinom" else _log_binom_lik(cS, nS, m)
+            return -np.sum(logsumexp(log_post + ll, axis=1))
+
+        x0 = [1.0, 0.0] + ([-2.0] if model == "betabinom" else [])
+    else:
+        raise ValueError(model)
     res = minimize(nll, x0=x0, method="Nelder-Mead", options={"xatol": 1e-4, "fatol": 1e-6, "maxiter": 4000})
-    out = {"beta": float(res.x[0]), "b": float(res.x[1]), "nll": float(res.fun), "prior": prior,
-           "eps": [float(e0), float(e1)], "eps_S": [float(s0), float(s1)]}
-    if overdispersion:
+    out = {"model": model, "beta": float(res.x[0]), "b": float(res.x[1]), "nll": float(res.fun),
+           "prior": prior, "eps": [float(e0), float(e1)], "eps_S": [float(s0), float(s1)]}
+    if model == "re":
+        out["sigma"] = float(np.exp(res.x[2]))
+    if model == "betabinom":
         out["rho"] = float(expit(res.x[2]))
     return out
+
+
+def self_split_control(succ_T: np.ndarray, seed: int = 0, **fit_kw) -> dict:
+    """Teacher-vs-itself control: split each prompt's seeds into two halves and fit the model with
+    one half as 'teacher' and the other as 'student'. Should give beta ~ 1, sigma ~ 0."""
+    rng = np.random.default_rng(seed)
+    n = succ_T.shape[1] // 2
+    perm = rng.permutation(succ_T.shape[1])
+    a, b = succ_T[:, perm[:n]].sum(1), succ_T[:, perm[n:2 * n]].sum(1)
+    return fit_tempering(a, n, b, n, **fit_kw)
 
 
 def fit_mode_tempering(teacher_counts: list[np.ndarray], student_counts: list[np.ndarray],
@@ -303,3 +333,17 @@ def smoothed_logit(c, n):
     c = np.asarray(c, float)
     p = (c + 0.5) / (n + 1)
     return np.log(p) - np.log1p(-p), 1.0 / ((n + 1) * p * (1 - p))
+
+
+def teacher_coverage(teacher_emb: np.ndarray, method_emb: np.ndarray, teacher_success=None) -> float:
+    """How well a method's K images cover the teacher's own samples for the ORIGINAL prompt:
+    mean over teacher samples of the max cosine similarity to any method image. Restrict to the
+    teacher samples that satisfy the checklist (`teacher_success`), and compute it in a feature
+    space not used for selection, so diversity outside the teacher's (correct) support does not count."""
+    t = teacher_emb / np.linalg.norm(teacher_emb, axis=1, keepdims=True)
+    m = method_emb / np.linalg.norm(method_emb, axis=1, keepdims=True)
+    if teacher_success is not None:
+        t = t[np.asarray(teacher_success, bool)]
+        if len(t) == 0:
+            return float("nan")
+    return float((t @ m.T).max(1).mean())

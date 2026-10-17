@@ -117,3 +117,34 @@ def test_amplification_script(tiny_config, geneval_file, tmp_path):
          "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path / "e3"))
     s = json.loads((tmp_path / "e3" / "summary.json").read_text())["tiny-student"]
     assert set(s["by_source"]) == {"paraphrase", "official_pe"} and s["amp"]["n"] == 4 * 3
+
+
+def test_remedy_eval_script(tiny_config, geneval_file, tmp_path):
+    pe = tmp_path / "pe.json"
+    its = load_geneval(geneval_file)
+    pe.write_text(json.dumps({i.prompt: "a detailed photo, " + i.prompt for i in its}))
+    out = _run("remedy_eval.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
+               "--geneval-meta", geneval_file, "--methods", "seeds", "pink", "pe", "teacher", "--k", "2",
+               "--n-ref", "3", "--pe-rewrites", str(pe), "--device", "cpu", "--dtype", "float32",
+               "--out", str(tmp_path / "e5"))
+    s = json.loads((tmp_path / "e5" / "summary.json").read_text())
+    assert set(s) == {"seeds", "pink", "pe", "teacher"} and 0 <= s["pink"]["teacher_coverage"] <= 1
+    assert "reword" not in out
+
+
+def test_reword_and_injection_parsing():
+    from dap.reword import attribute_injection, reword_k
+
+    llm = ScriptedLLM(['["a cat on the left, a dog on the right", "seen from above: a cat and a dog"]',
+                       "[false, true]"])
+    assert reword_k(llm, "a cat and a dog", 2) == ["a cat on the left, a dog on the right", "seen from above: a cat and a dog"]
+    assert attribute_injection(llm, "a cat and a dog", ["x", "y"]) == [False, True]
+    assert len(reword_k(ScriptedLLM(["not json"]), "a cat", 3)) == 3
+
+
+def test_pink_noise_statistics():
+    from dap.generation import pink_noise
+
+    x = pink_noise((4, 32, 32), seed=1)
+    assert x.shape == (4, 32, 32) and abs(float(x.mean())) < 1e-4 and abs(float(x.std()) - 1) < 0.02
+    assert (pink_noise((4, 32, 32), seed=1) == x).all()

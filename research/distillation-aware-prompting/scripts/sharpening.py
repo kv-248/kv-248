@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from dap import make_judge  # noqa: E402
 from dap.generation import CONFIG_PATH, Generator, load_families  # noqa: E402
 from dap.judges import score_intent  # noqa: E402
-from dap.metrics import bootstrap_tempering, fit_tempering, mean_pass_at_k, sharpening  # noqa: E402
+from dap.metrics import bootstrap_tempering, fit_tempering, mean_pass_at_k, self_split_control, sharpening  # noqa: E402
 from dap.questions import load_geneval  # noqa: E402
 
 KS = [1, 2, 4, 8, 16, 32, 64]
@@ -112,9 +112,11 @@ def main():
             eps_S = tuple(args.judge_eps_student) if args.judge_eps_student else tuple(args.judge_eps)
             fit_kw = {"eps": tuple(args.judge_eps), "eps_S": eps_S}
             row["tempering_fit"] = bootstrap_tempering(cT, args.n_seeds, cS, args.n_seeds, n_boot=args.n_boot, **fit_kw)
-            row["tempering_fit_overdispersed"] = fit_tempering(cT, args.n_seeds, cS, args.n_seeds,
-                                                               overdispersion=True, **fit_kw)
+            row["brackets"] = {m: fit_tempering(cT, args.n_seeds, cS, args.n_seeds, model=m, **fit_kw)["beta"]
+                               for m in ("binomial", "betabinom")}
         summary[v.name] = row
+    if args.n_seeds >= 4:  # teacher self-split control: should give beta ~ 1, sigma ~ 0
+        summary[teacher.name]["self_split_control"] = self_split_control(results[teacher.name])
     (out / "summary.json").write_text(json.dumps(summary, indent=1))
 
     ks = [k for k in KS if k <= args.n_seeds]
@@ -122,7 +124,8 @@ def main():
     for name, row in summary.items():
         sh, tf = row.get("sharpening_vs_teacher", {}), row.get("tempering_fit", {})
         print(f"{name:24s} {row['nfe_per_image']:>4d} " + " ".join(f"{row['pass@k'][k]:.3f}" for k in ks)
-              + (f"   {tf['beta']:.2f} [{tf['beta_ci'][0]:.2f},{tf['beta_ci'][1]:.2f}]  {sh['lost_reach']:.2f}" if tf else ""))
+              + (f"   {tf['beta']:.2f} [{tf['beta_ci'][0]:.2f},{tf['beta_ci'][1]:.2f}] sigma={tf['sigma']:.2f}  {sh['lost_reach']:.2f}"
+                 if tf else ""))
 
 
 if __name__ == "__main__":
