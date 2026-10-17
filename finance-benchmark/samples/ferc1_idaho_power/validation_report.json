@@ -1,0 +1,25 @@
+{
+  "source": "FERC Form 1 via Catalyst PUDL stable release (s3://pudl.catalyst.coop/stable/)",
+  "utility": "Idaho Power Company",
+  "utility_id_ferc1": 216,
+  "years": [
+    1994,
+    2025
+  ],
+  "n_years": 32,
+  "universe_utilities": 375,
+  "universe_checks": {
+    "within_year_rows": 226738,
+    "within_year_tie_rate": 0.9972,
+    "across_year_pairs": 211729,
+    "across_year_tie_rate": 0.9882,
+    "across_year_breaks_gt_1000": 1849
+  },
+  "utility_checks": {
+    "within_year_rows": 1762,
+    "within_year_tie_rate": 1.0,
+    "across_year_pairs": 1669,
+    "across_year_tie_rate": 0.997,
+    "across_year_breaks_gt_1000": 4
+  }
+}

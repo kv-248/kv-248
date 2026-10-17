@@ -1,0 +1,1764 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Return xmlns="http://www.irs.gov/efile" xsi:schemaLocation="http://www.irs.gov/efile" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" returnVersion="2012v2.3">
+  <ReturnHeader binaryAttachmentCount="0">
+    <Timestamp>2014-04-23T13:24:25-05:00</Timestamp>
+    <TaxPeriodEndDate>2013-06-30</TaxPeriodEndDate>
+    <PreparerFirm>
+      <PreparerFirmBusinessName>
+        <BusinessNameLine1>KPMG LLP</BusinessNameLine1>
+      </PreparerFirmBusinessName>
+      <PreparerFirmUSAddress>
+        <AddressLine1>55 Second Street 1400</AddressLine1>
+        <City>San Francisco</City>
+        <State>CA</State>
+        <ZIPCode>94105</ZIPCode>
+      </PreparerFirmUSAddress>
+    </PreparerFirm>
+    <ReturnType>990</ReturnType>
+    <TaxPeriodBeginDate>2012-07-01</TaxPeriodBeginDate>
+    <Filer>
+      <EIN>200049703</EIN>
+      <Name>
+        <BusinessNameLine1>Wikimedia Foundation Inc</BusinessNameLine1>
+      </Name>
+      <InCareOfName>% GARFIELD BYRD</InCareOfName>
+      <NameControl>WIKI</NameControl>
+      <Phone>4158396885</Phone>
+      <USAddress>
+        <AddressLine1>149 New Montgomery 6th Floor</AddressLine1>
+        <AddressLine2>Suite</AddressLine2>
+        <City>San Francisco</City>
+        <State>CA</State>
+        <ZIPCode>94105</ZIPCode>
+      </USAddress>
+    </Filer>
+    <Officer>
+      <Name>GARFIELD BYRD</Name>
+      <Title>CFA</Title>
+      <Phone>4158396885</Phone>
+      <DateSigned>2014-04-22</DateSigned>
+      <AuthorizeThirdParty>true</AuthorizeThirdParty>
+    </Officer>
+    <Preparer>
+      <Phone>4159635100</Phone>
+    </Preparer>
+    <TaxYear>2012</TaxYear>
+    <BuildTS>2015-11-30 17:44:51Z</BuildTS>
+  </ReturnHeader>
+  <ReturnData documentCount="10">
+    <IRS990 documentId="IRS990" referenceDocumentId="IRS990ScheduleO">
+      <NameOfPrincipalOfficerPerson>Garfield Byrd</NameOfPrincipalOfficerPerson>
+      <AddressPrincipalOfficerUS>
+        <AddressLine1>149 New Montgomery 6th Floor</AddressLine1>
+        <City>San Francisco</City>
+        <State>CA</State>
+        <ZIPCode>94105</ZIPCode>
+      </AddressPrincipalOfficerUS>
+      <GrossReceipts>56971227</GrossReceipts>
+      <GroupReturnForAffiliates>false</GroupReturnForAffiliates>
+      <Organization501c3>X</Organization501c3>
+      <WebSite>www.wikimediafoundation.org</WebSite>
+      <TypeOfOrganizationCorporation>X</TypeOfOrganizationCorporation>
+      <YearFormation>2003</YearFormation>
+      <StateLegalDomicile>FL</StateLegalDomicile>
+      <ActivityOrMissionDescription>The wikimedia foundation supports wikipedia and eight other wiki-based projects designed to enable people around the world to collaboratively develop educational materials for the benefit of all.</ActivityOrMissionDescription>
+      <NbrVotingMembersGoverningBody>9</NbrVotingMembersGoverningBody>
+      <NbrIndependentVotingMembers>9</NbrIndependentVotingMembers>
+      <TotalNbrEmployees>134</TotalNbrEmployees>
+      <TotalNbrVolunteers>80000</TotalNbrVolunteers>
+      <TotalGrossUBI>23933</TotalGrossUBI>
+      <NetUnrelatedBusinessTxblIncome>-28837</NetUnrelatedBusinessTxblIncome>
+      <ContributionsGrantsPriorYear>38990502</ContributionsGrantsPriorYear>
+      <ContributionsGrantsCurrentYear>45272234</ContributionsGrantsCurrentYear>
+      <ProgramServiceRevenuePriorYear>718685</ProgramServiceRevenuePriorYear>
+      <ProgramServiceRevenueCY>306705</ProgramServiceRevenueCY>
+      <InvestmentIncomePriorYear>45915</InvestmentIncomePriorYear>
+      <InvestmentIncomeCurrentYear>63907</InvestmentIncomeCurrentYear>
+      <OtherRevenuePriorYear>-52657</OtherRevenuePriorYear>
+      <OtherRevenueCurrentYear>24470</OtherRevenueCurrentYear>
+      <TotalRevenuePriorYear>39702445</TotalRevenuePriorYear>
+      <TotalRevenueCurrentYear>45667316</TotalRevenueCurrentYear>
+      <GrantsAndSimilarAmntsPriorYear>2106752</GrantsAndSimilarAmntsPriorYear>
+      <GrantsAndSimilarAmntsCY>2791378</GrantsAndSimilarAmntsCY>
+      <BenefitsPaidToMembersPriorYear>0</BenefitsPaidToMembersPriorYear>
+      <BenefitsPaidToMembersCY>0</BenefitsPaidToMembersCY>
+      <SalariesEtcPriorYear>11749500</SalariesEtcPriorYear>
+      <SalariesEtcCurrentYear>16023637</SalariesEtcCurrentYear>
+      <TotalProfFundrsngExpPriorYear>140436</TotalProfFundrsngExpPriorYear>
+      <TotalProfFundrsngExpCY>271632</TotalProfFundrsngExpCY>
+      <TotalFundrsngExpCurrentYear>3875773</TotalFundrsngExpCurrentYear>
+      <OtherExpensePriorYear>14967364</OtherExpensePriorYear>
+      <OtherExpensesCurrentYear>16084908</OtherExpensesCurrentYear>
+      <TotalExpensesPriorYear>28964052</TotalExpensesPriorYear>
+      <TotalExpensesCurrentYear>35171555</TotalExpensesCurrentYear>
+      <RevenuesLessExpensesPriorYear>10738393</RevenuesLessExpensesPriorYear>
+      <RevenuesLessExpensesCY>10495761</RevenuesLessExpensesCY>
+      <TotalAssetsBOY>37206891</TotalAssetsBOY>
+      <TotalAssetsEOY>48146893</TotalAssetsEOY>
+      <TotalLiabilitiesBOY>2277833</TotalLiabilitiesBOY>
+      <TotalLiabilitiesEOY>2957769</TotalLiabilitiesEOY>
+      <NetAssetsOrFundBalancesBOY>34929058</NetAssetsOrFundBalancesBOY>
+      <NetAssetsOrFundBalancesEOY>45189124</NetAssetsOrFundBalancesEOY>
+      <InfoInScheduleOPartIII>X</InfoInScheduleOPartIII>
+      <MissionDescription>THE MISSION OF THE WIKIMEDIA FOUNDATION IS TO EMPOWER AND ENGAGE PEOPLE AROUND THE WORLD TO COLLECT AND DEVELOP EDUCATIONAL CONTENT UNDER A FREE LICENSE OR IN THE PUBLIC DOMAIN AND TO DISSEMINATE IT EFFECTIVELY AND GLOBALLY. IN COLLABORATION WITH A NETWORK OF CHAPTERS and affiliated entities, THE FOUNDATION PROVIDES THE ESSENTIAL INFRASTRUCTURE AND AN ORGANIZATIONAL FRAMEWORK FOR THE SUPPORT AND DEVELOPMENT OF MULTILINGUAL WIKI PROJECTS AND OTHER ENDEAVORS WHICH SERVE THIS MISSION. THE FOUNDATION WILL MAKE AND KEEP USEFUL INFORMATION FROM ITS PROJECTS AVAILABLE ON THE INTERNET FREE OF CHARGE, IN PERPETUITY.</MissionDescription>
+      <SignificantNewProgramServices>false</SignificantNewProgramServices>
+      <SignificantChange>false</SignificantChange>
+      <Expense>16089191</Expense>
+      <Description>Support Wikipedia.org (the 5th most popular web property in the world) and other websites where volunteers can collaborate to develop free educational resources. Wikimedia engineering and product development team's mission is to build, improve and maintain the technical infrastructure of Wikimedia projects (software and hardware), by supporting and complementing volunteer efforts.</Description>
+      <Activity2>
+        <Expense>7722648</Expense>
+        <Grants>2791378</Grants>
+        <Revenue>306705</Revenue>
+        <Description>Grantmaking and Program Development's projects focus on the growth of Wikimedia in specific regions, the development of our Wikipedia Zero and mobile strategies, the building and maintaining of the Foundation's relationships with its constituencies, and the management of our global education program, worldwide program evaluation, grant making, research, and global communications. Grantmaking and Program Development is a key part of Wikimedia Foundation's strategic plan, and plays a central role in keeping the Wikimedia community central to all of the Foundation's work. The Foundation's success is contingent upon the future of the developing world as well as the support to our chapters and volunteers. Grantmaking and Program Development aims to bring the diverse voices of the Global South to the Wikimedia project, and to expand the reach of our projects and free knowledge to the global south, particularly via mobile phones and partnerships with mobile phone companies.</Description>
+      </Activity2>
+      <TotalProgramServiceExpense>23811839</TotalProgramServiceExpense>
+      <DescribedIn501C3 referenceDocumentId="IRS990ScheduleA">true</DescribedIn501C3>
+      <ScheduleBRequired>false</ScheduleBRequired>
+      <PoliticalActivities referenceDocumentId="IRS990ScheduleC">false</PoliticalActivities>
+      <LobbyingActivities referenceDocumentId="IRS990ScheduleC">true</LobbyingActivities>
+      <SubjectToProxyTax referenceDocumentId="IRS990ScheduleC">false</SubjectToProxyTax>
+      <DonorAdvisedFunds referenceDocumentId="IRS990ScheduleD">false</DonorAdvisedFunds>
+      <ConservationEasements referenceDocumentId="IRS990ScheduleD">false</ConservationEasements>
+      <CollectionsOfArt referenceDocumentId="IRS990ScheduleD">false</CollectionsOfArt>
+      <CreditCounseling referenceDocumentId="IRS990ScheduleD">false</CreditCounseling>
+      <TermOrPermanentEndowments referenceDocumentId="IRS990ScheduleD">false</TermOrPermanentEndowments>
+      <ReportLandBldgEquip referenceDocumentId="IRS990ScheduleD">true</ReportLandBldgEquip>
+      <ReportInvestOthSecurities referenceDocumentId="IRS990ScheduleD">true</ReportInvestOthSecurities>
+      <ReportProgRelInvest referenceDocumentId="IRS990ScheduleD">false</ReportProgRelInvest>
+      <ReportOtherAssets referenceDocumentId="IRS990ScheduleD">false</ReportOtherAssets>
+      <ReportOtherLiabilities referenceDocumentId="IRS990ScheduleD">true</ReportOtherLiabilities>
+      <ReportFin48Footnote referenceDocumentId="IRS990ScheduleD">true</ReportFin48Footnote>
+      <IndependentAuditFinancialStmt referenceDocumentId="IRS990ScheduleD">true</IndependentAuditFinancialStmt>
+      <ConsolidatedAuditFinancialStmt referenceDocumentId="IRS990ScheduleD">false</ConsolidatedAuditFinancialStmt>
+      <School>false</School>
+      <ForeignOffice>true</ForeignOffice>
+      <ForeignActivities referenceDocumentId="IRS990ScheduleF">true</ForeignActivities>
+      <MoreThan5000KToOrganizations referenceDocumentId="IRS990ScheduleF">true</MoreThan5000KToOrganizations>
+      <MoreThan5000KToIndividuals referenceDocumentId="IRS990ScheduleF">true</MoreThan5000KToIndividuals>
+      <ProfessionalFundraising referenceDocumentId="IRS990ScheduleG">true</ProfessionalFundraising>
+      <FundraisingActivities referenceDocumentId="IRS990ScheduleG">false</FundraisingActivities>
+      <Gaming referenceDocumentId="IRS990ScheduleG">false</Gaming>
+      <Hospital>false</Hospital>
+      <GrantsToOrganizations referenceDocumentId="IRS990ScheduleI">true</GrantsToOrganizations>
+      <GrantsToIndividuals referenceDocumentId="IRS990ScheduleI">true</GrantsToIndividuals>
+      <ScheduleJRequired referenceDocumentId="IRS990ScheduleJ">true</ScheduleJRequired>
+      <TaxExemptBonds>false</TaxExemptBonds>
+      <ExcessBenefitTransaction>false</ExcessBenefitTransaction>
+      <PriorExcessBenefitTransaction>false</PriorExcessBenefitTransaction>
+      <LoanToOfficerOrDQP>false</LoanToOfficerOrDQP>
+      <GrantToRelatedPerson>false</GrantToRelatedPerson>
+      <BsnssRltnshpWithOrganization>false</BsnssRltnshpWithOrganization>
+      <BsnssRltnshpThruFamilyMember>false</BsnssRltnshpThruFamilyMember>
+      <OfficerEntityWithBsnssRltnshp>false</OfficerEntityWithBsnssRltnshp>
+      <DeductibleNonCashContributions referenceDocumentId="IRS990ScheduleM">true</DeductibleNonCashContributions>
+      <DeductibleContributionsOfArt referenceDocumentId="IRS990ScheduleM">false</DeductibleContributionsOfArt>
+      <Terminated>false</Terminated>
+      <PartialLiquidation>false</PartialLiquidation>
+      <DisregardedEntity>false</DisregardedEntity>
+      <RelatedEntity>false</RelatedEntity>
+      <RelatedOrgControlledEntity>false</RelatedOrgControlledEntity>
+      <TransfersToExemptNonChrtblOrg>false</TransfersToExemptNonChrtblOrg>
+      <ActivitiesConductedPartnership>false</ActivitiesConductedPartnership>
+      <ScheduleORequired>true</ScheduleORequired>
+      <NumberFormsTransmittedWith1096>55</NumberFormsTransmittedWith1096>
+      <NumberW2GIncluded>0</NumberW2GIncluded>
+      <ComplianceWithBackupWitholding>true</ComplianceWithBackupWitholding>
+      <NumberOfEmployees>134</NumberOfEmployees>
+      <EmploymentTaxReturnsFiled>true</EmploymentTaxReturnsFiled>
+      <UnrelatedBusinessIncome>true</UnrelatedBusinessIncome>
+      <Form990-TFiled>true</Form990-TFiled>
+      <ForeignFinancialAccount>true</ForeignFinancialAccount>
+      <NameOfForeignCountry>FR</NameOfForeignCountry>
+      <NameOfForeignCountry>UK</NameOfForeignCountry>
+      <ProhibitedTaxShelterTrans>false</ProhibitedTaxShelterTrans>
+      <TaxablePartyNotification>false</TaxablePartyNotification>
+      <NonDeductibleContributions>false</NonDeductibleContributions>
+      <QuidProQuoContributions>false</QuidProQuoContributions>
+      <Form8282PropertyDisposedOf>false</Form8282PropertyDisposedOf>
+      <FundsToPayPremiums>false</FundsToPayPremiums>
+      <PremiumsPaid>false</PremiumsPaid>
+      <IndoorTanningServices>false</IndoorTanningServices>
+      <InfoInScheduleOPartVI>X</InfoInScheduleOPartVI>
+      <NbrVotingGoverningBodyMembers>9</NbrVotingGoverningBodyMembers>
+      <NumberIndependentVotingMembers>9</NumberIndependentVotingMembers>
+      <FamilyOrBusinessRelationship>false</FamilyOrBusinessRelationship>
+      <DelegationOfManagementDuties>false</DelegationOfManagementDuties>
+      <ChangesToOrganizingDocs>false</ChangesToOrganizingDocs>
+      <MaterialDiversionOrMisuse>false</MaterialDiversionOrMisuse>
+      <MembersOrStockholders>false</MembersOrStockholders>
+      <ElectionOfBoardMembers>true</ElectionOfBoardMembers>
+      <DecisionsSubjectToApproval>false</DecisionsSubjectToApproval>
+      <MinutesOfGoverningBody>true</MinutesOfGoverningBody>
+      <MinutesOfCommittees>true</MinutesOfCommittees>
+      <OfficerMailingAddress>false</OfficerMailingAddress>
+      <LocalChapters>false</LocalChapters>
+      <Form990ProvidedToGoverningBody>true</Form990ProvidedToGoverningBody>
+      <ConflictOfInterestPolicy>true</ConflictOfInterestPolicy>
+      <AnnualDisclosureCoveredPersons>true</AnnualDisclosureCoveredPersons>
+      <RegularMonitoringEnforcement>true</RegularMonitoringEnforcement>
+      <WhistleblowerPolicy>true</WhistleblowerPolicy>
+      <DocumentRetentionPolicy>false</DocumentRetentionPolicy>
+      <CompensationProcessCEO>true</CompensationProcessCEO>
+      <CompensationProcessOther>true</CompensationProcessOther>
+      <InvestmentInJointVenture>false</InvestmentInJointVenture>
+      <StatesWhereCopyOfReturnIsFiled>AL</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>AK</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>AR</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>CA</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>CT</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>FL</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>GA</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>HI</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>IL</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>KS</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>KY</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>ME</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>MD</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>MA</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>MI</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>MN</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>MS</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>NH</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>NJ</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>NM</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>NY</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>NC</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>ND</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>OH</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>OK</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>OR</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>PA</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>RI</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>SC</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>TN</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>UT</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>VA</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>WV</StatesWhereCopyOfReturnIsFiled>
+      <StatesWhereCopyOfReturnIsFiled>WI</StatesWhereCopyOfReturnIsFiled>
+      <OwnWebsite>X</OwnWebsite>
+      <UponRequest>X</UponRequest>
+      <TheBooksAreInCareOf>
+        <NamePerson>GARFIELD BYRD</NamePerson>
+        <TelephoneNumber>4158396885</TelephoneNumber>
+        <AddressUS>
+          <AddressLine1>149 NEW MONTGOMERY6TH FLOOR</AddressLine1>
+          <City>san francisco</City>
+          <State>CA</State>
+          <ZIPCode>94105</ZIPCode>
+        </AddressUS>
+      </TheBooksAreInCareOf>
+      <NoListedPersonsCompensated>X</NoListedPersonsCompensated>
+      <Form990PartVIISectionA>
+        <NamePerson>jimmy wales</NamePerson>
+        <Title>founder</Title>
+        <AverageHoursPerWeekRelated>10.0</AverageHoursPerWeekRelated>
+        <IndividualTrusteeOrDirector>X</IndividualTrusteeOrDirector>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>kat walsh</NamePerson>
+        <Title>chair</Title>
+        <AverageHoursPerWeekRelated>10.0</AverageHoursPerWeekRelated>
+        <IndividualTrusteeOrDirector>X</IndividualTrusteeOrDirector>
+        <Officer>X</Officer>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>jan-bart de vreede</NamePerson>
+        <Title>vice chair</Title>
+        <AverageHoursPerWeekRelated>10.0</AverageHoursPerWeekRelated>
+        <IndividualTrusteeOrDirector>X</IndividualTrusteeOrDirector>
+        <Officer>X</Officer>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>stu west</NamePerson>
+        <Title>trustee</Title>
+        <AverageHoursPerWeekRelated>10.0</AverageHoursPerWeekRelated>
+        <IndividualTrusteeOrDirector>X</IndividualTrusteeOrDirector>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>maria sefidari</NamePerson>
+        <Title>trustee</Title>
+        <AverageHoursPerWeekRelated>10.0</AverageHoursPerWeekRelated>
+        <IndividualTrusteeOrDirector>X</IndividualTrusteeOrDirector>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>bishakha datta</NamePerson>
+        <Title>trustee</Title>
+        <AverageHoursPerWeekRelated>10.0</AverageHoursPerWeekRelated>
+        <IndividualTrusteeOrDirector>X</IndividualTrusteeOrDirector>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>alice wiegand</NamePerson>
+        <Title>trustee</Title>
+        <AverageHoursPerWeekRelated>10.0</AverageHoursPerWeekRelated>
+        <IndividualTrusteeOrDirector>X</IndividualTrusteeOrDirector>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>samuel klein</NamePerson>
+        <Title>trustee</Title>
+        <AverageHoursPerWeekRelated>10.0</AverageHoursPerWeekRelated>
+        <IndividualTrusteeOrDirector>X</IndividualTrusteeOrDirector>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>patricio lorente</NamePerson>
+        <Title>trustee</Title>
+        <AverageHoursPerWeekRelated>10.0</AverageHoursPerWeekRelated>
+        <IndividualTrusteeOrDirector>X</IndividualTrusteeOrDirector>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>ting chen</NamePerson>
+        <Title>trustee</Title>
+        <AverageHoursPerWeekRelated>10.0</AverageHoursPerWeekRelated>
+        <IndividualTrusteeOrDirector>X</IndividualTrusteeOrDirector>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>Sue Gardner</NamePerson>
+        <Title>Executive Director</Title>
+        <AverageHoursPerWeekRelated>40.0</AverageHoursPerWeekRelated>
+        <Officer>X</Officer>
+        <ReportableCompFromOrganization>202095</ReportableCompFromOrganization>
+        <OtherCompensation>16296</OtherCompensation>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>Garfield Byrd</NamePerson>
+        <Title>Treasurer and CFA</Title>
+        <AverageHoursPerWeekRelated>40.0</AverageHoursPerWeekRelated>
+        <Officer>X</Officer>
+        <ReportableCompFromOrganization>155624</ReportableCompFromOrganization>
+        <OtherCompensation>27015</OtherCompensation>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>Geoff Brigham</NamePerson>
+        <Title>Secretary and General Counsel</Title>
+        <AverageHoursPerWeekRelated>40.0</AverageHoursPerWeekRelated>
+        <Officer>X</Officer>
+        <ReportableCompFromOrganization>188551</ReportableCompFromOrganization>
+        <OtherCompensation>24384</OtherCompensation>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>Zack Exley</NamePerson>
+        <Title>Chief Revenue Officer</Title>
+        <AverageHoursPerWeekRelated>40.0</AverageHoursPerWeekRelated>
+        <HighestCompensatedEmployee>X</HighestCompensatedEmployee>
+        <ReportableCompFromOrganization>184261</ReportableCompFromOrganization>
+        <OtherCompensation>25883</OtherCompensation>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>Erik Moeller</NamePerson>
+        <Title>Deputy Director</Title>
+        <AverageHoursPerWeekRelated>40.0</AverageHoursPerWeekRelated>
+        <HighestCompensatedEmployee>X</HighestCompensatedEmployee>
+        <ReportableCompFromOrganization>155095</ReportableCompFromOrganization>
+        <OtherCompensation>7261</OtherCompensation>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>Gayle Young</NamePerson>
+        <Title>Chief Talent &amp; Culture Officer</Title>
+        <AverageHoursPerWeekRelated>40.0</AverageHoursPerWeekRelated>
+        <HighestCompensatedEmployee>X</HighestCompensatedEmployee>
+        <ReportableCompFromOrganization>163127</ReportableCompFromOrganization>
+        <OtherCompensation>12724</OtherCompensation>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>cheong woo</NamePerson>
+        <Title>dir of engineering operations</Title>
+        <AverageHoursPerWeekRelated>40.0</AverageHoursPerWeekRelated>
+        <HighestCompensatedEmployee>X</HighestCompensatedEmployee>
+        <ReportableCompFromOrganization>146202</ReportableCompFromOrganization>
+        <OtherCompensation>26352</OtherCompensation>
+      </Form990PartVIISectionA>
+      <Form990PartVIISectionA>
+        <NamePerson>Kelly Kay</NamePerson>
+        <Title>Deputy General Counsel</Title>
+        <AverageHoursPerWeekRelated>40.0</AverageHoursPerWeekRelated>
+        <HighestCompensatedEmployee>X</HighestCompensatedEmployee>
+        <ReportableCompFromOrganization>153074</ReportableCompFromOrganization>
+        <OtherCompensation>19225</OtherCompensation>
+      </Form990PartVIISectionA>
+      <TotalReportableCompFromOrg>1348029</TotalReportableCompFromOrg>
+      <TotalOtherCompensation>159140</TotalOtherCompensation>
+      <NumberIndividualsGT100K>30</NumberIndividualsGT100K>
+      <FormersListed>false</FormersListed>
+      <TotalCompGT150K>true</TotalCompGT150K>
+      <CompensationFromOtherSources>false</CompensationFromOtherSources>
+      <ContractorCompensation>
+        <NameOfContractor>
+          <NamePerson>Cooley LLP</NamePerson>
+        </NameOfContractor>
+        <AddressOfContractor>
+          <AddressUS>
+            <AddressLine1>101 California 5th Floor</AddressLine1>
+            <City>SAN FRANCISCO</City>
+            <State>CA</State>
+            <ZIPCode>94111</ZIPCode>
+          </AddressUS>
+        </AddressOfContractor>
+        <DescriptionOfServices>legal services</DescriptionOfServices>
+        <Compensation>323885</Compensation>
+      </ContractorCompensation>
+      <ContractorCompensation>
+        <NameOfContractor>
+          <NamePerson>FPL FiberNet</NamePerson>
+        </NameOfContractor>
+        <AddressOfContractor>
+          <AddressUS>
+            <AddressLine1>9250 West Flagler Street</AddressLine1>
+            <City>MIAMI</City>
+            <State>FL</State>
+            <ZIPCode>33174</ZIPCode>
+          </AddressUS>
+        </AddressOfContractor>
+        <DescriptionOfServices>telecommunications</DescriptionOfServices>
+        <Compensation>322475</Compensation>
+      </ContractorCompensation>
+      <ContractorCompensation>
+        <NameOfContractor>
+          <NamePerson>Hiaring Smith LLP</NamePerson>
+        </NameOfContractor>
+        <AddressOfContractor>
+          <AddressUS>
+            <AddressLine1>1005 Bel Marin Keys Blvd</AddressLine1>
+            <City>NOVATO</City>
+            <State>CA</State>
+            <ZIPCode>94949</ZIPCode>
+          </AddressUS>
+        </AddressOfContractor>
+        <DescriptionOfServices>legal services</DescriptionOfServices>
+        <Compensation>357260</Compensation>
+      </ContractorCompensation>
+      <ContractorCompensation>
+        <NameOfContractor>
+          <NamePerson>PowerMediumHostway</NamePerson>
+        </NameOfContractor>
+        <AddressOfContractor>
+          <AddressUS>
+            <AddressLine1>PO Box 3480</AddressLine1>
+            <City>CHICAGO</City>
+            <State>IL</State>
+            <ZIPCode>60654</ZIPCode>
+          </AddressUS>
+        </AddressOfContractor>
+        <DescriptionOfServices>web hosting services</DescriptionOfServices>
+        <Compensation>291940</Compensation>
+      </ContractorCompensation>
+      <ContractorCompensation>
+        <NameOfContractor>
+          <NamePerson>Oppenheim Associates</NamePerson>
+        </NameOfContractor>
+        <AddressOfContractor>
+          <AddressUS>
+            <AddressLine1>221 main street suite 540</AddressLine1>
+            <City>SAN FRANCISCO</City>
+            <State>CA</State>
+            <ZIPCode>94105</ZIPCode>
+          </AddressUS>
+        </AddressOfContractor>
+        <DescriptionOfServices>exec search/recruit</DescriptionOfServices>
+        <Compensation>256090</Compensation>
+      </ContractorCompensation>
+      <NumberOfContractorsGT100K>22</NumberOfContractorsGT100K>
+      <AllOtherContributions>45272234</AllOtherContributions>
+      <NoncashContributions>27440</NoncashContributions>
+      <TotalContributions>45272234</TotalContributions>
+      <ProgramServiceRevenue>
+        <Description>LICENSING REVENUE</Description>
+        <BusinessCode>518210</BusinessCode>
+        <TotalRevenueColumn>142236</TotalRevenueColumn>
+        <RelatedOrExemptFunctionIncome>142236</RelatedOrExemptFunctionIncome>
+      </ProgramServiceRevenue>
+      <ProgramServiceRevenue>
+        <Description>DATA PROVIDER SERVICES</Description>
+        <BusinessCode>518210</BusinessCode>
+        <TotalRevenueColumn>148469</TotalRevenueColumn>
+        <RelatedOrExemptFunctionIncome>148469</RelatedOrExemptFunctionIncome>
+      </ProgramServiceRevenue>
+      <ProgramServiceRevenue>
+        <Description>SPEAKING FEES</Description>
+        <BusinessCode>518210</BusinessCode>
+        <TotalRevenueColumn>16000</TotalRevenueColumn>
+        <RelatedOrExemptFunctionIncome>16000</RelatedOrExemptFunctionIncome>
+      </ProgramServiceRevenue>
+      <TotalProgramServiceRevenue>306705</TotalProgramServiceRevenue>
+      <InvestmentIncome>
+        <TotalRevenueColumn>71112</TotalRevenueColumn>
+        <ExclusionAmount>71112</ExclusionAmount>
+      </InvestmentIncome>
+      <IncomeFromInvestBondProceeds>
+        <TotalRevenueColumn>0</TotalRevenueColumn>
+      </IncomeFromInvestBondProceeds>
+      <RoyaltiesRevenue>
+        <TotalRevenueColumn>0</TotalRevenueColumn>
+      </RoyaltiesRevenue>
+      <GrossRents>
+        <Real>268970</Real>
+      </GrossRents>
+      <LessRentalExpenses>
+        <Real>272333</Real>
+      </LessRentalExpenses>
+      <RentalIncomeOrLoss>
+        <Real>-3363</Real>
+        <Personal>0</Personal>
+      </RentalIncomeOrLoss>
+      <NetRentalIncomeOrLoss>
+        <TotalRevenueColumn>-3363</TotalRevenueColumn>
+        <ExclusionAmount>-3363</ExclusionAmount>
+      </NetRentalIncomeOrLoss>
+      <GrossAmountSalesAssets>
+        <Securities>10973012</Securities>
+        <Other>4984</Other>
+      </GrossAmountSalesAssets>
+      <LessCostOthBasisSalesExpenses>
+        <Securities>10985201</Securities>
+      </LessCostOthBasisSalesExpenses>
+      <GainOrLoss>
+        <Securities>-12189</Securities>
+        <Other>4984</Other>
+      </GainOrLoss>
+      <NetGainOrLossInvestments>
+        <TotalRevenueColumn>-7205</TotalRevenueColumn>
+        <ExclusionAmount>-7205</ExclusionAmount>
+      </NetGainOrLossInvestments>
+      <NetIncomeFromFundraisingEvents>
+        <TotalRevenueColumn>0</TotalRevenueColumn>
+      </NetIncomeFromFundraisingEvents>
+      <NetIncomeFromGaming>
+        <TotalRevenueColumn>0</TotalRevenueColumn>
+      </NetIncomeFromGaming>
+      <GrossSalesOfInventory>70310</GrossSalesOfInventory>
+      <CostOfGoodsSold>46377</CostOfGoodsSold>
+      <NetIncomeOrLoss>
+        <TotalRevenueColumn>23933</TotalRevenueColumn>
+        <UnrelatedBusinessRevenue>23933</UnrelatedBusinessRevenue>
+      </NetIncomeOrLoss>
+      <OtherRevenueMisc>
+        <Description>CREDIT CARD CASH BACK</Description>
+        <BusinessCode>900099</BusinessCode>
+        <TotalRevenueColumn>3900</TotalRevenueColumn>
+        <ExclusionAmount>3900</ExclusionAmount>
+      </OtherRevenueMisc>
+      <TotalOtherRevenue>3900</TotalOtherRevenue>
+      <TotalRevenue>
+        <TotalRevenueColumn>45667316</TotalRevenueColumn>
+        <RelatedOrExemptFunctionIncome>306705</RelatedOrExemptFunctionIncome>
+        <UnrelatedBusinessRevenue>23933</UnrelatedBusinessRevenue>
+        <ExclusionAmount>64444</ExclusionAmount>
+      </TotalRevenue>
+      <GrantsToDomesticOrgs>
+        <Total>35750</Total>
+        <ProgramServices>35750</ProgramServices>
+      </GrantsToDomesticOrgs>
+      <GrantsToDomesticIndividuals>
+        <Total>56205</Total>
+        <ProgramServices>56205</ProgramServices>
+      </GrantsToDomesticIndividuals>
+      <ForeignGrants>
+        <Total>2699423</Total>
+        <ProgramServices>2699423</ProgramServices>
+      </ForeignGrants>
+      <BenefitsToMembers>
+        <Total>0</Total>
+      </BenefitsToMembers>
+      <CompCurrentOfficersDirectors>
+        <Total>392529</Total>
+        <ProgramServices>188470</ProgramServices>
+        <ManagementAndGeneral>193589</ManagementAndGeneral>
+        <Fundraising>10470</Fundraising>
+      </CompCurrentOfficersDirectors>
+      <CompDisqualPersons>
+        <Total>0</Total>
+      </CompDisqualPersons>
+      <OtherSalariesAndWages>
+        <Total>12738011</Total>
+        <ProgramServices>9562322</ProgramServices>
+        <ManagementAndGeneral>1947046</ManagementAndGeneral>
+        <Fundraising>1228643</Fundraising>
+      </OtherSalariesAndWages>
+      <PensionPlanContributions>
+        <Total>360585</Total>
+        <ProgramServices>247858</ProgramServices>
+        <ManagementAndGeneral>73498</ManagementAndGeneral>
+        <Fundraising>39229</Fundraising>
+      </PensionPlanContributions>
+      <OtherEmployeeBenefits>
+        <Total>1636323</Total>
+        <ProgramServices>1110727</ProgramServices>
+        <ManagementAndGeneral>362370</ManagementAndGeneral>
+        <Fundraising>163226</Fundraising>
+      </OtherEmployeeBenefits>
+      <PayrollTaxes>
+        <Total>896189</Total>
+        <ProgramServices>634791</ProgramServices>
+        <ManagementAndGeneral>163654</ManagementAndGeneral>
+        <Fundraising>97744</Fundraising>
+      </PayrollTaxes>
+      <FeesForServicesManagement>
+        <Total>0</Total>
+      </FeesForServicesManagement>
+      <FeesForServicesLegal>
+        <Total>1076020</Total>
+        <ManagementAndGeneral>1076020</ManagementAndGeneral>
+      </FeesForServicesLegal>
+      <FeesForServicesAccounting>
+        <Total>113363</Total>
+        <ManagementAndGeneral>113363</ManagementAndGeneral>
+      </FeesForServicesAccounting>
+      <FeesForServicesLobbying>
+        <Total>0</Total>
+      </FeesForServicesLobbying>
+      <FeesForServicesProfFundraising>
+        <Total>271632</Total>
+        <Fundraising>271632</Fundraising>
+      </FeesForServicesProfFundraising>
+      <FeesForServicesInvstMgmntFees>
+        <Total>0</Total>
+      </FeesForServicesInvstMgmntFees>
+      <FeesForServicesOther>
+        <Total>3787622</Total>
+        <ProgramServices>2275243</ProgramServices>
+        <ManagementAndGeneral>1086323</ManagementAndGeneral>
+        <Fundraising>426056</Fundraising>
+      </FeesForServicesOther>
+      <Advertising>
+        <Total>63775</Total>
+        <ProgramServices>25407</ProgramServices>
+        <ManagementAndGeneral>38368</ManagementAndGeneral>
+      </Advertising>
+      <OfficeExpenses>
+        <Total>576593</Total>
+        <ProgramServices>127296</ProgramServices>
+        <ManagementAndGeneral>415845</ManagementAndGeneral>
+        <Fundraising>33452</Fundraising>
+      </OfficeExpenses>
+      <InformationTechnology>
+        <Total>2725156</Total>
+        <ProgramServices>2662155</ProgramServices>
+        <ManagementAndGeneral>56682</ManagementAndGeneral>
+        <Fundraising>6319</Fundraising>
+      </InformationTechnology>
+      <Royalties>
+        <Total>0</Total>
+      </Royalties>
+      <Occupancy>
+        <Total>733564</Total>
+        <ProgramServices>311965</ProgramServices>
+        <ManagementAndGeneral>352986</ManagementAndGeneral>
+        <Fundraising>68613</Fundraising>
+      </Occupancy>
+      <Travel>
+        <Total>817294</Total>
+        <ProgramServices>636298</ProgramServices>
+        <ManagementAndGeneral>89277</ManagementAndGeneral>
+        <Fundraising>91719</Fundraising>
+      </Travel>
+      <TravelEntrtnmntPublicOfficials>
+        <Total>0</Total>
+      </TravelEntrtnmntPublicOfficials>
+      <ConferencesMeetings>
+        <Total>577719</Total>
+        <ProgramServices>488816</ProgramServices>
+        <ManagementAndGeneral>58558</ManagementAndGeneral>
+        <Fundraising>30345</Fundraising>
+      </ConferencesMeetings>
+      <Interest>
+        <Total>0</Total>
+      </Interest>
+      <PaymentsToAffiliates>
+        <Total>0</Total>
+      </PaymentsToAffiliates>
+      <DepreciationDepletion>
+        <Total>2706841</Total>
+        <ProgramServices>2441148</ProgramServices>
+        <ManagementAndGeneral>265693</ManagementAndGeneral>
+      </DepreciationDepletion>
+      <Insurance>
+        <Total>251683</Total>
+        <ManagementAndGeneral>251683</ManagementAndGeneral>
+      </Insurance>
+      <OtherExpenses>
+        <Description>DONATIONS PROCESSING FEES</Description>
+        <Total>1368722</Total>
+        <Fundraising>1368722</Fundraising>
+      </OtherExpenses>
+      <OtherExpenses>
+        <Description>RECRUITING</Description>
+        <Total>500860</Total>
+        <ProgramServices>72748</ProgramServices>
+        <ManagementAndGeneral>428112</ManagementAndGeneral>
+      </OtherExpenses>
+      <OtherExpenses>
+        <Description>STAFF DEVELOPMENT/ENRICHMENT</Description>
+        <Total>484337</Total>
+        <ProgramServices>68112</ProgramServices>
+        <ManagementAndGeneral>398621</ManagementAndGeneral>
+        <Fundraising>17604</Fundraising>
+      </OtherExpenses>
+      <OtherExpenses>
+        <Description>VOLUNTEER DEVELOPMENT</Description>
+        <Total>149221</Total>
+        <ProgramServices>146879</ProgramServices>
+        <ManagementAndGeneral>450</ManagementAndGeneral>
+        <Fundraising>1892</Fundraising>
+      </OtherExpenses>
+      <AllOtherExpenses>
+        <Total>152138</Total>
+        <ProgramServices>20226</ProgramServices>
+        <ManagementAndGeneral>111805</ManagementAndGeneral>
+        <Fundraising>20107</Fundraising>
+      </AllOtherExpenses>
+      <TotalFunctionalExpenses>
+        <Total>35171555</Total>
+        <ProgramServices>23811839</ProgramServices>
+        <ManagementAndGeneral>7483943</ManagementAndGeneral>
+        <Fundraising>3875773</Fundraising>
+      </TotalFunctionalExpenses>
+      <CashNonInterestBearing>
+        <BOY>5234483</BOY>
+        <EOY>5045589</EOY>
+      </CashNonInterestBearing>
+      <SavingsAndTempCashInvestments>
+        <BOY>16562142</BOY>
+        <EOY>17126300</EOY>
+      </SavingsAndTempCashInvestments>
+      <PledgesAndGrantsReceivable>
+        <BOY>4889919</BOY>
+        <EOY>2045683</EOY>
+      </PledgesAndGrantsReceivable>
+      <AccountsReceivable>
+        <BOY>494487</BOY>
+        <EOY>47000</EOY>
+      </AccountsReceivable>
+      <ReceivablesFromOfficersEtc>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </ReceivablesFromOfficersEtc>
+      <ReceivablesFromDisqualPersons>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </ReceivablesFromDisqualPersons>
+      <OtherNotesLoansReceivableNet>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </OtherNotesLoansReceivableNet>
+      <InventoriesForSaleOrUse>
+        <BOY>40274</BOY>
+        <EOY>66986</EOY>
+      </InventoriesForSaleOrUse>
+      <PrepaidExpensesDeferredCharges>
+        <BOY>879826</BOY>
+        <EOY>990737</EOY>
+      </PrepaidExpensesDeferredCharges>
+      <LandBuildingsEquipmentBasis>9943805</LandBuildingsEquipmentBasis>
+      <LandBldgEquipmentAccumDeprec>5031999</LandBldgEquipmentAccumDeprec>
+      <LandBuildingsEquipmentBasisNet>
+        <BOY>5168106</BOY>
+        <EOY>4911806</EOY>
+      </LandBuildingsEquipmentBasisNet>
+      <InvestmentsPubTradedSecurities>
+        <BOY>0</BOY>
+        <EOY>13313246</EOY>
+      </InvestmentsPubTradedSecurities>
+      <InvestmentsOtherSecurities>
+        <BOY>3600401</BOY>
+        <EOY>4265822</EOY>
+      </InvestmentsOtherSecurities>
+      <InvestmentsProgramRelated>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </InvestmentsProgramRelated>
+      <IntangibleAssets>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </IntangibleAssets>
+      <OtherAssetsTotal>
+        <BOY>337253</BOY>
+        <EOY>333724</EOY>
+      </OtherAssetsTotal>
+      <TotalAssets>
+        <BOY>37206891</BOY>
+        <EOY>48146893</EOY>
+      </TotalAssets>
+      <AccountsPayableAccruedExpenses>
+        <BOY>1779251</BOY>
+        <EOY>2549048</EOY>
+      </AccountsPayableAccruedExpenses>
+      <GrantsPayable>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </GrantsPayable>
+      <DeferredRevenue>
+        <BOY>293606</BOY>
+        <EOY>37311</EOY>
+      </DeferredRevenue>
+      <TaxExemptBondLiabilities>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </TaxExemptBondLiabilities>
+      <EscrowAccountLiability>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </EscrowAccountLiability>
+      <LoansFromOfficersDirectors>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </LoansFromOfficersDirectors>
+      <MortNotesPyblSecuredInvestProp>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </MortNotesPyblSecuredInvestProp>
+      <UnsecuredNotesLoansPayable>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </UnsecuredNotesLoansPayable>
+      <OtherLiabilities>
+        <BOY>204976</BOY>
+        <EOY>371410</EOY>
+      </OtherLiabilities>
+      <TotalLiabilities>
+        <BOY>2277833</BOY>
+        <EOY>2957769</EOY>
+      </TotalLiabilities>
+      <FollowSFAS117>X</FollowSFAS117>
+      <UnrestrictedNetAssets>
+        <BOY>29991139</BOY>
+        <EOY>42921751</EOY>
+      </UnrestrictedNetAssets>
+      <TemporarilyRestrictedNetAssets>
+        <BOY>4937919</BOY>
+        <EOY>2267373</EOY>
+      </TemporarilyRestrictedNetAssets>
+      <PermanentlyRestrictedNetAssets>
+        <BOY>0</BOY>
+        <EOY>0</EOY>
+      </PermanentlyRestrictedNetAssets>
+      <TotalNetAssetsFundBalances>
+        <BOY>34929058</BOY>
+        <EOY>45189124</EOY>
+      </TotalNetAssetsFundBalances>
+      <TotalLiabNetAssetsFundBalances>
+        <BOY>37206891</BOY>
+        <EOY>48146893</EOY>
+      </TotalLiabNetAssetsFundBalances>
+      <InfoInScheduleOPartXI>X</InfoInScheduleOPartXI>
+      <ReconcilationRevenueExpenses>10495761</ReconcilationRevenueExpenses>
+      <ReconciliationUnrealizedInvest>-41501</ReconciliationUnrealizedInvest>
+      <ReconcilationOtherChanges>-194194</ReconcilationOtherChanges>
+      <MethodOfAccountingAccrual>X</MethodOfAccountingAccrual>
+      <AccountantCompileOrReview>false</AccountantCompileOrReview>
+      <FSAudited>true</FSAudited>
+      <FSAuditedBasis>
+        <FinancialStatementSeparate>X</FinancialStatementSeparate>
+      </FSAuditedBasis>
+      <AuditCommittee>true</AuditCommittee>
+      <FederalGrantAuditRequired>false</FederalGrantAuditRequired>
+    </IRS990>
+    <IRS990ScheduleA documentId="IRS990ScheduleA">
+      <PubliclySupportedOrg170b1Avi>X</PubliclySupportedOrg170b1Avi>
+      <GiftsGrantsContribReceived170>
+        <CurrentTaxYearMinus4Years>7664458</CurrentTaxYearMinus4Years>
+        <CurrentTaxYearMinus3Years>15226464</CurrentTaxYearMinus3Years>
+        <CurrentTaxYearMinus2Years>26440538</CurrentTaxYearMinus2Years>
+        <CurrentTaxYearMinus1Year>38990502</CurrentTaxYearMinus1Year>
+        <CurrentTaxYear>45272234</CurrentTaxYear>
+        <Total>133594196</Total>
+      </GiftsGrantsContribReceived170>
+      <TaxRevLeviedForOrgBenefit170>
+        <Total>0</Total>
+      </TaxRevLeviedForOrgBenefit170>
+      <ValueSrvcFcltsFurnishedByGovt>
+        <Total>0</Total>
+      </ValueSrvcFcltsFurnishedByGovt>
+      <Total170>
+        <CurrentTaxYearMinus4Years>7664458</CurrentTaxYearMinus4Years>
+        <CurrentTaxYearMinus3Years>15226464</CurrentTaxYearMinus3Years>
+        <CurrentTaxYearMinus2Years>26440538</CurrentTaxYearMinus2Years>
+        <CurrentTaxYearMinus1Year>38990502</CurrentTaxYearMinus1Year>
+        <CurrentTaxYear>45272234</CurrentTaxYear>
+        <Total>133594196</Total>
+      </Total170>
+      <AmountsSubstContributorsTotal>5209379</AmountsSubstContributorsTotal>
+      <PublicSupportTotal170>128384817</PublicSupportTotal170>
+      <GrossInvestmentIncome170>
+        <CurrentTaxYearMinus4Years>32534</CurrentTaxYearMinus4Years>
+        <CurrentTaxYearMinus3Years>12202</CurrentTaxYearMinus3Years>
+        <CurrentTaxYearMinus2Years>47416</CurrentTaxYearMinus2Years>
+        <CurrentTaxYearMinus1Year>50814</CurrentTaxYearMinus1Year>
+        <CurrentTaxYear>340082</CurrentTaxYear>
+        <Total>483048</Total>
+      </GrossInvestmentIncome170>
+      <NetUBI>
+        <CurrentTaxYearMinus1Year>3722</CurrentTaxYearMinus1Year>
+        <CurrentTaxYear>23933</CurrentTaxYear>
+        <Total>27655</Total>
+      </NetUBI>
+      <OtherIncome170>
+        <CurrentTaxYearMinus4Years>30417</CurrentTaxYearMinus4Years>
+        <CurrentTaxYearMinus3Years>-131707</CurrentTaxYearMinus3Years>
+        <CurrentTaxYearMinus2Years>-120376</CurrentTaxYearMinus2Years>
+        <CurrentTaxYearMinus1Year>-56379</CurrentTaxYearMinus1Year>
+        <CurrentTaxYear>3900</CurrentTaxYear>
+        <Total>-274145</Total>
+      </OtherIncome170>
+      <TotalSupport>133830754</TotalSupport>
+      <GrossReceiptsFromAdmissionsEtc>3417955</GrossReceiptsFromAdmissionsEtc>
+      <PublicSupportPertcentage170>0.95931</PublicSupportPertcentage170>
+      <PublicSupportPertcentPriorYear>0.89617</PublicSupportPertcentPriorYear>
+      <ThirtyThreePercntTestsCY170>X</ThirtyThreePercntTestsCY170>
+    </IRS990ScheduleA>
+    <IRS990ScheduleC documentId="IRS990ScheduleC">
+      <TotalGrassrootsLobbying>
+        <FilingOrganizationsTotals>0</FilingOrganizationsTotals>
+      </TotalGrassrootsLobbying>
+      <TotalDirectLobbying />
+      <TotalLobbyingExpenditures>
+        <FilingOrganizationsTotals>0</FilingOrganizationsTotals>
+      </TotalLobbyingExpenditures>
+      <OtherExemptPurposeExpenditures />
+      <TotalExemptPurposeExpenditures>
+        <FilingOrganizationsTotals>0</FilingOrganizationsTotals>
+      </TotalExemptPurposeExpenditures>
+      <LobbyingNontaxableAmount>
+        <FilingOrganizationsTotals>0</FilingOrganizationsTotals>
+      </LobbyingNontaxableAmount>
+      <GrassrootsNontaxableAmount>
+        <FilingOrganizationsTotals>0</FilingOrganizationsTotals>
+      </GrassrootsNontaxableAmount>
+      <TotLobbyingGrassrootMinusNonTx>
+        <FilingOrganizationsTotals>0</FilingOrganizationsTotals>
+      </TotLobbyingGrassrootMinusNonTx>
+      <TotLobbyExpendMnsLobbyingNontx>
+        <FilingOrganizationsTotals>0</FilingOrganizationsTotals>
+      </TotLobbyExpendMnsLobbyingNontx>
+      <LobbyingNontaxableAmount2>
+        <CurrentYearMinus1>1000000</CurrentYearMinus1>
+        <CurrentYear>0</CurrentYear>
+        <Total>1000000</Total>
+      </LobbyingNontaxableAmount2>
+      <LobbyingCeilingAmount>1500000</LobbyingCeilingAmount>
+      <TotalLobbyingExpenditures2>
+        <CurrentYearMinus1>98953</CurrentYearMinus1>
+        <CurrentYear>0</CurrentYear>
+        <Total>98953</Total>
+      </TotalLobbyingExpenditures2>
+      <GrassrootsNontaxableAmount2>
+        <CurrentYearMinus1>250000</CurrentYearMinus1>
+        <CurrentYear>0</CurrentYear>
+        <Total>250000</Total>
+      </GrassrootsNontaxableAmount2>
+      <GrassrootsCeilingAmount>375000</GrassrootsCeilingAmount>
+      <GrassrootsLobbyingExpenditures>
+        <CurrentYearMinus1>98953</CurrentYearMinus1>
+        <CurrentYear>0</CurrentYear>
+        <Total>98953</Total>
+      </GrassrootsLobbyingExpenditures>
+    </IRS990ScheduleC>
+    <IRS990ScheduleD documentId="IRS990ScheduleD">
+      <ArtPublicExhibitionAmts />
+      <HeldWorksOfArtAmts />
+      <CurrentYearMinus3Years />
+      <CurrentYearMinus4Years />
+      <Land />
+      <Buildings />
+      <LeaseholdImprovements />
+      <Equipment>
+        <OtherCostOrOtherBasis>9943805</OtherCostOrOtherBasis>
+        <Depreciation>5031999</Depreciation>
+        <BookValue>4911806</BookValue>
+      </Equipment>
+      <OtherLandBuildings />
+      <TotalOfBookValueLandBuildings>4911806</TotalOfBookValueLandBuildings>
+      <FinancialDerivatives />
+      <CloselyHeldEquityInterests />
+      <OtherSecurities>
+        <Description>CERTIFICATES OF DEPOSIT</Description>
+        <BookValue>4141012</BookValue>
+        <MethodOfValuation>C</MethodOfValuation>
+      </OtherSecurities>
+      <OtherSecurities>
+        <Description>OTHER NON-PUBLICLY TRADED</Description>
+        <BookValue>124810</BookValue>
+        <MethodOfValuation>C</MethodOfValuation>
+      </OtherSecurities>
+      <TotalOfBookValueSecurities>4265822</TotalOfBookValueSecurities>
+      <FederalIncomeTaxLiability>0</FederalIncomeTaxLiability>
+      <OtherLiabilities>
+        <Description>OTHER LIABILITIES</Description>
+        <Amount>137569</Amount>
+      </OtherLiabilities>
+      <OtherLiabilities>
+        <Description>STRAIGHT LINE RENT EXPENSE ADJUSTMENT</Description>
+        <Amount>233841</Amount>
+      </OtherLiabilities>
+      <TotalOfAmounts>371410</TotalOfAmounts>
+      <FootnoteInPartXIII>X</FootnoteInPartXIII>
+      <TotRevenueEtcAuditedFinclStmt>45964862</TotRevenueEtcAuditedFinclStmt>
+      <NetUnrealizedGainsInvestments>-41501</NetUnrealizedGainsInvestments>
+      <DonatedSrvcAndUseOfFacilities>260909</DonatedSrvcAndUseOfFacilities>
+      <OtherRevenues>78137</OtherRevenues>
+      <RevenueNotRptdF990>297545</RevenueNotRptdF990>
+      <RevenueSubtotal>45667317</RevenueSubtotal>
+      <OtherRevenuesNotIncluded>-1</OtherRevenuesNotIncluded>
+      <RevenueNotRptdOnFinStmt>-1</RevenueNotRptdOnFinStmt>
+      <TotalRevenuePerForm990>45667316</TotalRevenuePerForm990>
+      <TotExpensesEtcAuditedFinclStmt>35704796</TotExpensesEtcAuditedFinclStmt>
+      <DonatedServicesUseOfFacilities>260909</DonatedServicesUseOfFacilities>
+      <OtherExpensesIncluded>272333</OtherExpensesIncluded>
+      <ExpensesNotRptdF990>533242</ExpensesNotRptdF990>
+      <ExpensesSubtotal>35171554</ExpensesSubtotal>
+      <OtherExpensesNotIncluded>1</OtherExpensesNotIncluded>
+      <ExpensesNotRptdOnFinStmt>1</ExpensesNotRptdOnFinStmt>
+      <TotalExpensesPerForm990>35171555</TotalExpensesPerForm990>
+      <Form990ScheduleDPartXIII>
+        <Identifier>Schedule D, Part XI, Line 2d</Identifier>
+        <Explanation>Unrealized Foreign Exchange Loss ($194,196) Rent Expense $272,333 Total $78,137 Schedule D, Part XI, Line 4b Rounding ($1)</Explanation>
+      </Form990ScheduleDPartXIII>
+      <Form990ScheduleDPartXIII>
+        <Identifier>Schedule D, Part XII, Line 2d</Identifier>
+        <Explanation>Rent Expense $272,333 Schedule D, Part X, Line 4b Rounding $1</Explanation>
+      </Form990ScheduleDPartXIII>
+      <Form990ScheduleDPartXIII>
+        <Identifier>Schedule D, Part X, Line 2</Identifier>
+        <Explanation>ASC 740, Income Taxes The Foundation has evaluated the financial statement impact of positions taken or expected to be taken in its tax returns. Management has determined that no tax liabilities need be recorded under applicable accounting guidance.</Explanation>
+      </Form990ScheduleDPartXIII>
+    </IRS990ScheduleD>
+    <IRS990ScheduleF documentId="IRS990ScheduleF">
+      <GrantRecordsMaintained>true</GrantRecordsMaintained>
+      <AcctsActvsOutUSTable>
+        <Region>East Asia and the Pacific</Region>
+        <NumberOfEmployees>2</NumberOfEmployees>
+        <TypeOfActivitiesConducted>Program Services</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>SUPPORT WIKIPEDIA</SpecificServicesProvided>
+        <TotalExpenditures>2993</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>South Asia</Region>
+        <NumberOfEmployees>6</NumberOfEmployees>
+        <TypeOfActivitiesConducted>Program Services</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>SUPPORT WIKIPEDIA</SpecificServicesProvided>
+        <TotalExpenditures>58066</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Europe (Including Iceland and Greenland)</Region>
+        <NumberOfEmployees>20</NumberOfEmployees>
+        <TypeOfActivitiesConducted>Program Services</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>SUPPORT WIKIPEDIa</SpecificServicesProvided>
+        <TotalExpenditures>673881</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Middle East and North Africa</Region>
+        <NumberOfEmployees>3</NumberOfEmployees>
+        <TypeOfActivitiesConducted>Program Services</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>SUPPORT WIKIPEDIA</SpecificServicesProvided>
+        <TotalExpenditures>62622</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>South America</Region>
+        <NumberOfEmployees>5</NumberOfEmployees>
+        <TypeOfActivitiesConducted>Program Services</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>SUPPORT WIKIPEDIA</SpecificServicesProvided>
+        <TotalExpenditures>156813</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Sub-Saharan Africa</Region>
+        <NumberOfEmployees>1</NumberOfEmployees>
+        <TypeOfActivitiesConducted>Program Services</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>SUPPORT WIKIPEDIA</SpecificServicesProvided>
+        <TotalExpenditures>28327</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>East Asia and the Pacific</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>41001</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Europe (Including Iceland and Greenland)</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>1932478</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Middle East and North Africa</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>143821</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>North America</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>28573</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Russia and the Newly Independent States</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>2969</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>South America</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>137556</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>South Asia</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>206434</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Sub-Saharan Africa</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>26669</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Europe (Including Iceland and Greenland)</Region>
+        <TypeOfActivitiesConducted>Investments</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>N/A</SpecificServicesProvided>
+        <TotalExpenditures>7560794</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>East Asia and the Pacific</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Scholarships to Attend</SpecificServicesProvided>
+        <TotalExpenditures>5499</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Europe (Including Iceland and Greenland)</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Scholarships to Attend</SpecificServicesProvided>
+        <TotalExpenditures>2989</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>North America</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Scholarships to Attend</SpecificServicesProvided>
+        <TotalExpenditures>1101</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Russia and the Newly Independent States</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Scholarships to Attend</SpecificServicesProvided>
+        <TotalExpenditures>2224</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Europe (Including Iceland and Greenland)</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>21854</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>South America</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>1785</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>South America</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Scholarship to Attend</SpecificServicesProvided>
+        <TotalExpenditures>2147</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>South Asia</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Further Mission</SpecificServicesProvided>
+        <TotalExpenditures>3422</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>South Asia</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Scholarship to Attend</SpecificServicesProvided>
+        <TotalExpenditures>1807</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Sub-Saharan Africa</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>further mission</SpecificServicesProvided>
+        <TotalExpenditures>5770</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Sub-Saharan Africa</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Scholarship to Attend</SpecificServicesProvided>
+        <TotalExpenditures>2182</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>East Asia and the Pacific</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>further mission</SpecificServicesProvided>
+        <TotalExpenditures>5981</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>North America</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>further mission</SpecificServicesProvided>
+        <TotalExpenditures>6514</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <AcctsActvsOutUSTable>
+        <Region>Middle East and North Africa</Region>
+        <TypeOfActivitiesConducted>Grantmaking</TypeOfActivitiesConducted>
+        <SpecificServicesProvided>Scholarship to Attend</SpecificServicesProvided>
+        <TotalExpenditures>5167</TotalExpenditures>
+      </AcctsActvsOutUSTable>
+      <SubtotalNumberOfEmployees>37</SubtotalNumberOfEmployees>
+      <TotalNumberOfEmployees>37</TotalNumberOfEmployees>
+      <SubtotalAmountSpent>11071485</SubtotalAmountSpent>
+      <ContAmountSpent>59954</ContAmountSpent>
+      <TotalAmountSpent>11131439</TotalAmountSpent>
+      <GrantsToOrgsOutsideUS>
+        <Region>East Asia and the Pacific</Region>
+        <PurposeOfGrant>FURTHER MISSION</PurposeOfGrant>
+        <AmountOfCashGrant>41001</AmountOfCashGrant>
+        <MannerOfCashDisbursement>wire</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>n/a</MethodOfValuation>
+      </GrantsToOrgsOutsideUS>
+      <GrantsToOrgsOutsideUS>
+        <Region>Europe (Including Iceland and Greenland)</Region>
+        <PurposeOfGrant>FURTHER MISSION</PurposeOfGrant>
+        <AmountOfCashGrant>1927583</AmountOfCashGrant>
+        <MannerOfCashDisbursement>wire</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>n/a</MethodOfValuation>
+      </GrantsToOrgsOutsideUS>
+      <GrantsToOrgsOutsideUS>
+        <Region>Middle East and North Africa</Region>
+        <PurposeOfGrant>FURTHER MISSION IN HOSTING ANNUAL WIKIMEDIA CONFERENCE - WIKIMANIA</PurposeOfGrant>
+        <AmountOfCashGrant>143821</AmountOfCashGrant>
+        <MannerOfCashDisbursement>wire</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>n/a</MethodOfValuation>
+      </GrantsToOrgsOutsideUS>
+      <GrantsToOrgsOutsideUS>
+        <Region>South America</Region>
+        <PurposeOfGrant>FURTHER MISSION</PurposeOfGrant>
+        <AmountOfCashGrant>132857</AmountOfCashGrant>
+        <MannerOfCashDisbursement>wire</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>n/a</MethodOfValuation>
+      </GrantsToOrgsOutsideUS>
+      <GrantsToOrgsOutsideUS>
+        <Region>South Asia</Region>
+        <PurposeOfGrant>FURTHER MISSION</PurposeOfGrant>
+        <AmountOfCashGrant>206434</AmountOfCashGrant>
+        <MannerOfCashDisbursement>wire</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>n/a</MethodOfValuation>
+      </GrantsToOrgsOutsideUS>
+      <GrantsToOrgsOutsideUS>
+        <Region>Sub-Saharan Africa</Region>
+        <PurposeOfGrant>FURTHER MISSION</PurposeOfGrant>
+        <AmountOfCashGrant>26669</AmountOfCashGrant>
+        <MannerOfCashDisbursement>wire</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>n/a</MethodOfValuation>
+      </GrantsToOrgsOutsideUS>
+      <GrantsToOrgsOutsideUS>
+        <Region>North America</Region>
+        <PurposeOfGrant>FURTHER MISSION</PurposeOfGrant>
+        <AmountOfCashGrant>27325</AmountOfCashGrant>
+        <MannerOfCashDisbursement>wire</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>n/a</MethodOfValuation>
+      </GrantsToOrgsOutsideUS>
+      <TotalNumberOf501c3Orgs>19</TotalNumberOf501c3Orgs>
+      <TotalNumberOfOtherOrgs>19</TotalNumberOfOtherOrgs>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>SCHOLARSHIPS TO ATTEND CONFERENCE</TypeOfAssistance>
+        <Region>East Asia and the Pacific</Region>
+        <NumberOfRecipients>5</NumberOfRecipients>
+        <AmountOfCashGrant>5499</AmountOfCashGrant>
+        <MannerOfCashDisbursement>WIRE</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>SCHOLARSHIPS TO ATTEND CONFERENCE</TypeOfAssistance>
+        <Region>North America</Region>
+        <NumberOfRecipients>3</NumberOfRecipients>
+        <AmountOfCashGrant>1101</AmountOfCashGrant>
+        <MannerOfCashDisbursement>WIRE</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>SCHOLARSHIPS TO ATTEND CONFERENCE</TypeOfAssistance>
+        <Region>Russia and the Newly Independent States</Region>
+        <NumberOfRecipients>3</NumberOfRecipients>
+        <AmountOfCashGrant>2224</AmountOfCashGrant>
+        <MannerOfCashDisbursement>WIRE</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>FURTHER MISSION</TypeOfAssistance>
+        <Region>South America</Region>
+        <NumberOfRecipients>4</NumberOfRecipients>
+        <AmountOfCashGrant>1785</AmountOfCashGrant>
+        <MannerOfCashDisbursement>wire</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>SCHOLARSHIPS TO ATTEND CONFERENCE</TypeOfAssistance>
+        <Region>South America</Region>
+        <NumberOfRecipients>6</NumberOfRecipients>
+        <AmountOfCashGrant>2147</AmountOfCashGrant>
+        <MannerOfCashDisbursement>WIRE</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>FURTHER MISSION</TypeOfAssistance>
+        <Region>South Asia</Region>
+        <NumberOfRecipients>3</NumberOfRecipients>
+        <AmountOfCashGrant>3422</AmountOfCashGrant>
+        <MannerOfCashDisbursement>wire</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>SCHOLARSHIPS TO ATTEND CONFERENCE</TypeOfAssistance>
+        <Region>South Asia</Region>
+        <NumberOfRecipients>4</NumberOfRecipients>
+        <AmountOfCashGrant>1807</AmountOfCashGrant>
+        <MannerOfCashDisbursement>WIRE</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>FURTHER MISSION</TypeOfAssistance>
+        <Region>Sub-Saharan Africa</Region>
+        <NumberOfRecipients>2</NumberOfRecipients>
+        <AmountOfCashGrant>5770</AmountOfCashGrant>
+        <MannerOfCashDisbursement>wire</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>SCHOLARSHIPS TO ATTEND CONFERENCE</TypeOfAssistance>
+        <Region>Sub-Saharan Africa</Region>
+        <NumberOfRecipients>1</NumberOfRecipients>
+        <AmountOfCashGrant>2182</AmountOfCashGrant>
+        <MannerOfCashDisbursement>WIRE</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>n/a</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>FURTHER MISSION</TypeOfAssistance>
+        <Region>East Asia and the Pacific</Region>
+        <NumberOfRecipients>4</NumberOfRecipients>
+        <AmountOfCashGrant>5981</AmountOfCashGrant>
+        <MannerOfCashDisbursement>WIRE</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>N/A</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>FURTHER MISSION</TypeOfAssistance>
+        <Region>North America</Region>
+        <NumberOfRecipients>5</NumberOfRecipients>
+        <AmountOfCashGrant>6514</AmountOfCashGrant>
+        <MannerOfCashDisbursement>WIRE</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>N/A</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <GrantsToIndOutsideUS>
+        <TypeOfAssistance>Scholarships to Attend Conference</TypeOfAssistance>
+        <Region>Middle East and North Africa</Region>
+        <NumberOfRecipients>4</NumberOfRecipients>
+        <AmountOfCashGrant>5167</AmountOfCashGrant>
+        <MannerOfCashDisbursement>WIRE</MannerOfCashDisbursement>
+        <AmountOfNonCashAssistance>0</AmountOfNonCashAssistance>
+        <DescriptionOfNonCashAssistance>N/A</DescriptionOfNonCashAssistance>
+        <MethodOfValuation>FMV</MethodOfValuation>
+      </GrantsToIndOutsideUS>
+      <TransferToForeignCorp>false</TransferToForeignCorp>
+      <InterestInForeignTrust>false</InterestInForeignTrust>
+      <OwnForeignCorp>false</OwnForeignCorp>
+      <PassiveForeignInvestCo>false</PassiveForeignInvestCo>
+      <ForeignPartnership>false</ForeignPartnership>
+      <BoycottCountries>false</BoycottCountries>
+      <Form990ScheduleFPartV>
+        <Identifier>Procedures for monitoring use of grant funds outside the U.S.:</Identifier>
+        <ReturnReference>Grants to Organizations -</ReturnReference>
+        <Explanation>Applicants that have met each program's eligibility criteria participate in a public application process by submitting a grant proposal that contains a description of the mission-related work they are proposing, a budget, a start date and completion date, and a description of how this work will achieve the Wikimedia Foundation's mission or the Wikimedia movement strategic priorities. When an applicant is awarded a grant and becomes a grantee, the grantee completes screening requirements and signs a grant agreement stipulating that they will use grant funds for charitable purposes consistent with the Wikimedia Foundation's mission and the purposes described in the grant proposal; that they agree to the reporting requirements, including maintaining receipts/documentation of expenses for four years; that they agree to procedures for notifying the Wikimedia Foundation of important changes that may affect the grant; and that they will return any unused grant funds after the end of the grant's term. Once each grant is complete, the grantee will submit a report or series of reports that demonstrate how the grant funds were spent and describe the impact of the work. Grants to Individuals - Grants to individuals follow the same process as other grants unless they are travel scholarships. Individuals apply for travel scholarships (primarily to attend the annual conference, Wikimania) and applications are reviewed and either accepted or denied. In most cases, travel is then arranged for the individual and paid for directly by The Wikimedia Foundation. In very limited cases, individuals book travel themselves and provide receipts to the foundation which then reimburses them based on the receipts.</Explanation>
+      </Form990ScheduleFPartV>
+      <Form990ScheduleFPartV>
+        <Identifier>Method of accounting</Identifier>
+        <Explanation>The grants and expenditures reported in Schedule F were based on the accrual method of accounting.</Explanation>
+      </Form990ScheduleFPartV>
+    </IRS990ScheduleF>
+    <IRS990ScheduleG documentId="IRS990ScheduleG">
+      <EmailSolicitations>X</EmailSolicitations>
+      <SolicitationOfNonGovtGrants>X</SolicitationOfNonGovtGrants>
+      <AgreementRefFundraising>true</AgreementRefFundraising>
+      <FundraiserActivityInformation>
+        <NameOfIndividual>OMP Inc</NameOfIndividual>
+        <AddressUS>
+          <AddressLine1>1133 19th street NW suite 300</AddressLine1>
+          <City>washington</City>
+          <State>DC</State>
+          <ZIPCode>20036</ZIPCode>
+        </AddressUS>
+        <Activity>Fundraising consulting</Activity>
+        <FundraiserControlOfFunds>false</FundraiserControlOfFunds>
+        <AmountRetainedByContractor>77704</AmountRetainedByContractor>
+      </FundraiserActivityInformation>
+      <FundraiserActivityInformation>
+        <NameOfIndividual>Trilogy Interactive LLC</NameOfIndividual>
+        <AddressUS>
+          <AddressLine1>PO Box 4177</AddressLine1>
+          <City>mountain view</City>
+          <State>CA</State>
+          <ZIPCode>94040</ZIPCode>
+        </AddressUS>
+        <Activity>emailing donors</Activity>
+        <FundraiserControlOfFunds>false</FundraiserControlOfFunds>
+        <GrossReceipts>0</GrossReceipts>
+        <AmountRetainedByContractor>68264</AmountRetainedByContractor>
+        <NetToOrganization>0</NetToOrganization>
+      </FundraiserActivityInformation>
+      <FundraiserActivityInformation>
+        <NameOfIndividual>Tractive West LLC</NameOfIndividual>
+        <AddressUS>
+          <AddressLine1>221 S Park Central South</AddressLine1>
+          <City>Springfield</City>
+          <State>MO</State>
+          <ZIPCode>65806</ZIPCode>
+        </AddressUS>
+        <Activity>creative content</Activity>
+        <FundraiserControlOfFunds>false</FundraiserControlOfFunds>
+        <GrossReceipts>0</GrossReceipts>
+        <AmountRetainedByContractor>25803</AmountRetainedByContractor>
+        <NetToOrganization>0</NetToOrganization>
+      </FundraiserActivityInformation>
+      <FundraiserActivityInformation>
+        <NameOfIndividual>Demi Creative LLC</NameOfIndividual>
+        <AddressUS>
+          <AddressLine1>400 W Walnut</AddressLine1>
+          <City>Springfield</City>
+          <State>MO</State>
+          <ZIPCode>65806</ZIPCode>
+        </AddressUS>
+        <Activity>website design</Activity>
+        <FundraiserControlOfFunds>false</FundraiserControlOfFunds>
+        <AmountRetainedByContractor>55076</AmountRetainedByContractor>
+      </FundraiserActivityInformation>
+      <TotalGrossReceipts>0</TotalGrossReceipts>
+      <TotalRetainedByContractors>226847</TotalRetainedByContractors>
+      <TotalNetToOrganization>0</TotalNetToOrganization>
+      <LicensedStates>AL</LicensedStates>
+      <LicensedStates>AK</LicensedStates>
+      <LicensedStates>AR</LicensedStates>
+      <LicensedStates>CA</LicensedStates>
+      <LicensedStates>CO</LicensedStates>
+      <LicensedStates>CT</LicensedStates>
+      <LicensedStates>FL</LicensedStates>
+      <LicensedStates>GA</LicensedStates>
+      <LicensedStates>HI</LicensedStates>
+      <LicensedStates>IL</LicensedStates>
+      <LicensedStates>KS</LicensedStates>
+      <LicensedStates>KY</LicensedStates>
+      <LicensedStates>ME</LicensedStates>
+      <LicensedStates>MD</LicensedStates>
+      <LicensedStates>MA</LicensedStates>
+      <LicensedStates>MI</LicensedStates>
+      <LicensedStates>MN</LicensedStates>
+      <LicensedStates>MS</LicensedStates>
+      <LicensedStates>NH</LicensedStates>
+      <LicensedStates>NJ</LicensedStates>
+      <LicensedStates>NM</LicensedStates>
+      <LicensedStates>NY</LicensedStates>
+      <LicensedStates>NC</LicensedStates>
+      <LicensedStates>ND</LicensedStates>
+      <LicensedStates>OH</LicensedStates>
+      <LicensedStates>OK</LicensedStates>
+      <LicensedStates>OR</LicensedStates>
+      <LicensedStates>PA</LicensedStates>
+      <LicensedStates>RI</LicensedStates>
+      <LicensedStates>SC</LicensedStates>
+      <LicensedStates>TN</LicensedStates>
+      <LicensedStates>UT</LicensedStates>
+      <LicensedStates>VA</LicensedStates>
+      <LicensedStates>WA</LicensedStates>
+      <LicensedStates>WV</LicensedStates>
+      <LicensedStates>WI</LicensedStates>
+    </IRS990ScheduleG>
+    <IRS990ScheduleI documentId="IRS990ScheduleI">
+      <RecordsMaintained>true</RecordsMaintained>
+      <RecipientTable>
+        <RecipientNameBusiness>
+          <BusinessNameLine1>Software Freedom Conservancy Inc</BusinessNameLine1>
+        </RecipientNameBusiness>
+        <AddressUS>
+          <AddressLine1>137 Montague Street STE 380</AddressLine1>
+          <City>Brooklyn</City>
+          <State>NY</State>
+          <ZIPCode>11201</ZIPCode>
+        </AddressUS>
+        <EINOfRecipient>412203632</EINOfRecipient>
+        <IRCSection>501(c)(3)</IRCSection>
+        <AmountOfCashGrant>10000</AmountOfCashGrant>
+        <PurposeOfGrant>SEE PART IV</PurposeOfGrant>
+      </RecipientTable>
+      <RecipientTable>
+        <RecipientNameBusiness>
+          <BusinessNameLine1>Consumers Union of US Inc</BusinessNameLine1>
+        </RecipientNameBusiness>
+        <AddressUS>
+          <AddressLine1>101 Truman Avenue</AddressLine1>
+          <City>Yonkers</City>
+          <State>NY</State>
+          <ZIPCode>10703</ZIPCode>
+        </AddressUS>
+        <EINOfRecipient>131776434</EINOfRecipient>
+        <IRCSection>501(c)(3)</IRCSection>
+        <AmountOfCashGrant>6000</AmountOfCashGrant>
+        <PurposeOfGrant>SEE PART IV</PurposeOfGrant>
+      </RecipientTable>
+      <RecipientTable>
+        <RecipientNameBusiness>
+          <BusinessNameLine1>The John Ernest Foundation</BusinessNameLine1>
+        </RecipientNameBusiness>
+        <AddressUS>
+          <AddressLine1>PO Box 60225</AddressLine1>
+          <City>Palo Alto</City>
+          <State>CA</State>
+          <ZIPCode>94306</ZIPCode>
+        </AddressUS>
+        <EINOfRecipient>943170824</EINOfRecipient>
+        <IRCSection>501(c)(3)</IRCSection>
+        <AmountOfCashGrant>29000</AmountOfCashGrant>
+        <PurposeOfGrant>SEE PART IV</PurposeOfGrant>
+      </RecipientTable>
+      <RecipientTable>
+        <RecipientNameBusiness>
+          <BusinessNameLine1>Wiki Society of Washington DC</BusinessNameLine1>
+        </RecipientNameBusiness>
+        <AddressUS>
+          <AddressLine1>PO Box 9522</AddressLine1>
+          <City>Washington</City>
+          <State>DC</State>
+          <ZIPCode>20016</ZIPCode>
+        </AddressUS>
+        <EINOfRecipient>452106571</EINOfRecipient>
+        <IRCSection>pending</IRCSection>
+        <AmountOfCashGrant>18721</AmountOfCashGrant>
+        <PurposeOfGrant>SEE PART IV</PurposeOfGrant>
+      </RecipientTable>
+      <TotalNbrOf501C3AndGovtGrants>4</TotalNbrOf501C3AndGovtGrants>
+      <TotalNbrOfOtherOrganizations>0</TotalNbrOfOtherOrganizations>
+      <Form990ScheduleIPartIV>
+        <Identifier>MONITORING THE USE OF GRANT FUNDS</Identifier>
+        <ReturnReference>SCHEDULE I, PART I, QUESTION 2</ReturnReference>
+        <Explanation>Grants to Organizations Applicants that have met each program's eligibility criteria participate in a public application process by submitting a grant proposal that contains a description of the mission-related work they are proposing, a budget, a start date and completion date, and a description of how this work will achieve the Wikimedia Foundation's mission or the Wikimedia movement strategic priorities. When an applicant is awarded a grant and becomes a grantee, the grantee completes screening requirements and signs a grant agreement stipulating that they will use grant funds for charitable purposes consistent with the Wikimedia Foundation's mission and the purposes described in the grant proposal; that they agree to the reporting requirements, including maintaining receipts/documentation of expenses for four years; that they agree to procedures for notifying the Wikimedia Foundation of important changes that may affect the grant; and that they will return any unused grant funds after the end of the grant's term. Once each grant is complete, the grantee will submit a report or series of reports that demonstrate how the grant funds were spent and describe the impact of the work. GRANT FUNDS TO INDIVIDUALS Grants to individuals follow the same process as other grants unless they are travel scholarships. Individuals apply for travel scholarships (primarily to attend the annual conference, Wikimania) and applications are reviewed and either accepted or denied. In most cases, travel is then arranged for the individual and paid for directly by The Wikimedia Foundation. In very limited cases, individuals book travel themselves and provide receipts to the Foundation which then reimburses them based on the receipts. Schedule I Part II Purpose of grant to the Software Freedom Conservancy, Inc.: For the development of free non-profit accounting software. Purpose of grant to the Consumers Union of U.S., Inc.: TO support two Wikipedians in Residence working with consumer reports. Purpose of grant to The John Ernest Foundation: TO support the 2013 Joint International Symposium on Open Collaboration. Purpose of grant to the Wiki Society of Washington DC: To increase the number of freely licensed photographs of monuments on Wikimedia Commons.</Explanation>
+      </Form990ScheduleIPartIV>
+    </IRS990ScheduleI>
+    <IRS990ScheduleJ documentId="IRS990ScheduleJ">
+      <CompensationCommittee>X</CompensationCommittee>
+      <IndependentConsultant>X</IndependentConsultant>
+      <Form990OfOtherOrganizations>X</Form990OfOtherOrganizations>
+      <CompensationSurvey>X</CompensationSurvey>
+      <BoardOrCommitteeApproval>X</BoardOrCommitteeApproval>
+      <SeverancePayment>false</SeverancePayment>
+      <SupplementalNonqualRetirePlan>false</SupplementalNonqualRetirePlan>
+      <EquityBasedCompArrangement>false</EquityBasedCompArrangement>
+      <CompBasedOnRevenueOfFilingOrg>false</CompBasedOnRevenueOfFilingOrg>
+      <CompBasedOnRevenueRelatedOrgs>false</CompBasedOnRevenueRelatedOrgs>
+      <CompBasedNetEarningsFilingOrg>false</CompBasedNetEarningsFilingOrg>
+      <CompBasedNetEarningsRelateOrgs>false</CompBasedNetEarningsRelateOrgs>
+      <AnyNonFixedPayments>false</AnyNonFixedPayments>
+      <InitialContractException>false</InitialContractException>
+      <Form990ScheduleJPartII>
+        <NamePerson>Sue Gardner</NamePerson>
+        <Title>Executive Director</Title>
+        <BaseCompensationFilingOrg>200000</BaseCompensationFilingOrg>
+        <OtherCompensationFilingOrg>2095</OtherCompensationFilingOrg>
+        <DeferredCompFilingOrg>7667</DeferredCompFilingOrg>
+        <NontaxableBenefitsFilingOrg>8629</NontaxableBenefitsFilingOrg>
+        <TotalCompensationFilingOrg>218391</TotalCompensationFilingOrg>
+        <CompReportPrior990FilingOrg>0</CompReportPrior990FilingOrg>
+      </Form990ScheduleJPartII>
+      <Form990ScheduleJPartII>
+        <NamePerson>Garfield Byrd</NamePerson>
+        <Title>Treasurer and CFA</Title>
+        <BaseCompensationFilingOrg>152250</BaseCompensationFilingOrg>
+        <OtherCompensationFilingOrg>3374</OtherCompensationFilingOrg>
+        <DeferredCompFilingOrg>6090</DeferredCompFilingOrg>
+        <NontaxableBenefitsFilingOrg>20925</NontaxableBenefitsFilingOrg>
+        <TotalCompensationFilingOrg>182639</TotalCompensationFilingOrg>
+        <CompReportPrior990FilingOrg>0</CompReportPrior990FilingOrg>
+      </Form990ScheduleJPartII>
+      <Form990ScheduleJPartII>
+        <NamePerson>Geoff Brigham</NamePerson>
+        <Title>Secretary and General Counsel</Title>
+        <BaseCompensationFilingOrg>185507</BaseCompensationFilingOrg>
+        <OtherCompensationFilingOrg>3044</OtherCompensationFilingOrg>
+        <DeferredCompFilingOrg>2441</DeferredCompFilingOrg>
+        <NontaxableBenefitsFilingOrg>21943</NontaxableBenefitsFilingOrg>
+        <TotalCompensationFilingOrg>212935</TotalCompensationFilingOrg>
+        <CompReportPrior990FilingOrg>0</CompReportPrior990FilingOrg>
+      </Form990ScheduleJPartII>
+      <Form990ScheduleJPartII>
+        <NamePerson>Zack Exley</NamePerson>
+        <Title>Chief Revenue Officer</Title>
+        <BaseCompensationFilingOrg>180838</BaseCompensationFilingOrg>
+        <OtherCompensationFilingOrg>3423</OtherCompensationFilingOrg>
+        <DeferredCompFilingOrg>5425</DeferredCompFilingOrg>
+        <NontaxableBenefitsFilingOrg>20458</NontaxableBenefitsFilingOrg>
+        <TotalCompensationFilingOrg>210144</TotalCompensationFilingOrg>
+        <CompReportPrior990FilingOrg>0</CompReportPrior990FilingOrg>
+      </Form990ScheduleJPartII>
+      <Form990ScheduleJPartII>
+        <NamePerson>Erik Moeller</NamePerson>
+        <Title>Deputy Director</Title>
+        <BaseCompensationFilingOrg>154500</BaseCompensationFilingOrg>
+        <OtherCompensationFilingOrg>595</OtherCompensationFilingOrg>
+        <DeferredCompFilingOrg>0</DeferredCompFilingOrg>
+        <NontaxableBenefitsFilingOrg>7261</NontaxableBenefitsFilingOrg>
+        <TotalCompensationFilingOrg>162356</TotalCompensationFilingOrg>
+        <CompReportPrior990FilingOrg>0</CompReportPrior990FilingOrg>
+      </Form990ScheduleJPartII>
+      <Form990ScheduleJPartII>
+        <NamePerson>Gayle Young</NamePerson>
+        <Title>Chief Talent &amp; Culture Officer</Title>
+        <BaseCompensationFilingOrg>161810</BaseCompensationFilingOrg>
+        <OtherCompensationFilingOrg>1317</OtherCompensationFilingOrg>
+        <DeferredCompFilingOrg>6080</DeferredCompFilingOrg>
+        <NontaxableBenefitsFilingOrg>6644</NontaxableBenefitsFilingOrg>
+        <TotalCompensationFilingOrg>175851</TotalCompensationFilingOrg>
+        <CompReportPrior990FilingOrg>0</CompReportPrior990FilingOrg>
+      </Form990ScheduleJPartII>
+      <Form990ScheduleJPartII>
+        <NamePerson>cheong woo</NamePerson>
+        <Title>dir of engineering operations</Title>
+        <BaseCompensationFilingOrg>143450</BaseCompensationFilingOrg>
+        <OtherCompensationFilingOrg>2752</OtherCompensationFilingOrg>
+        <DeferredCompFilingOrg>2814</DeferredCompFilingOrg>
+        <NontaxableBenefitsFilingOrg>23538</NontaxableBenefitsFilingOrg>
+        <TotalCompensationFilingOrg>172554</TotalCompensationFilingOrg>
+        <CompReportPrior990FilingOrg>0</CompReportPrior990FilingOrg>
+      </Form990ScheduleJPartII>
+      <Form990ScheduleJPartII>
+        <NamePerson>Kelly Kay</NamePerson>
+        <Title>Deputy General Counsel</Title>
+        <BaseCompensationFilingOrg>150898</BaseCompensationFilingOrg>
+        <OtherCompensationFilingOrg>2176</OtherCompensationFilingOrg>
+        <DeferredCompFilingOrg>4440</DeferredCompFilingOrg>
+        <NontaxableBenefitsFilingOrg>14785</NontaxableBenefitsFilingOrg>
+        <TotalCompensationFilingOrg>172299</TotalCompensationFilingOrg>
+        <CompReportPrior990FilingOrg>0</CompReportPrior990FilingOrg>
+      </Form990ScheduleJPartII>
+    </IRS990ScheduleJ>
+    <IRS990ScheduleM documentId="IRS990ScheduleM">
+      <WorksOfArt />
+      <ArtHistoricalTreasures />
+      <ArtFractionalInterest />
+      <BooksAndPublications />
+      <ClothingAndHouseholdGoods />
+      <CarsAndOtherVehicles />
+      <BoatsAndPlanes />
+      <IntellectualProperty />
+      <SecuritiesPubliclyTraded>
+        <NonCashCheckbox>X</NonCashCheckbox>
+        <NumberOfContributions>22</NumberOfContributions>
+        <NoncashContribsRptdF990>27440</NoncashContribsRptdF990>
+        <MethodOfDeterminingRevenues>average market price</MethodOfDeterminingRevenues>
+      </SecuritiesPubliclyTraded>
+      <SecuritiesCloselyHeldStock />
+      <SecuritiesPrtnrshpTrustIntrsts />
+      <SecuritiesMiscellaneous />
+      <QualifiedContribHistStruct />
+      <QualifiedContribOther />
+      <RealEstateResidential />
+      <RealEstateCommercial />
+      <RealEstateOther />
+      <Collectibles />
+      <FoodInventory />
+      <DrugsAndMedicalSupplies />
+      <Taxidermy />
+      <HistoricalArtifacts />
+      <ScientificSpecimens />
+      <ArchaeologicalArtifacts />
+      <AnyPropertyThatMustBeHeld>false</AnyPropertyThatMustBeHeld>
+      <ReviewProcessUnusualNCGifts>false</ReviewProcessUnusualNCGifts>
+      <ThirdPartiesUsed>false</ThirdPartiesUsed>
+      <Form990ScheduleMPartII>
+        <Identifier>Part I Column (B)</Identifier>
+        <Explanation>The organization is reporting the number of items contributed.</Explanation>
+      </Form990ScheduleMPartII>
+    </IRS990ScheduleM>
+    <IRS990ScheduleO documentId="IRS990ScheduleO">
+      <GeneralExplanation>
+        <Identifier>Form 990 part VI, line 7A</Identifier>
+        <Explanation>The Board consists of a maximum of ten Trustees. Three seats are elected directly by the Wikimedia community, two seats are selected by the Wikimedia chapters, there is one Board-appointed "community founder" seat reserved for Jimmy Wales, and there are four Board-appointed specific expertise" seats. Form 990 part VI, line 11a Review of Form 990: The first draft of the 990 was developed by an external accounting firm under the direction of the Controller with additional guidance from the Chief of Finance and Administration (CFA). It was reviewed for accuracy and completeness by the CFA and then by the Executive Director. Then a meeting of the audit committee was held at which the CFA walked through the draft in detail for the audit committee's approval. A complete copy of the Form 990 was provided to the voting members of the governing body prior to filing with the Internal Revenue Service. Form 990 Part VI, Line 12 Conflict of interest: The organization's board members, and officers (covered persons) complete annually a Conflict of Interest Statement the purpose of which is to identify any personal, family and/or business relationships and/or transactions that may pose a potential conflict. These forms are submitted to the general counsel and are reviewed by the Board. Additionally, the covered persons also complete annually a Pledge of Personal Commitment that affirms that the individual is in compliance with the Conflict of Interest Policy and that the individual will promptly notify the Executive Director and the Board Chair when a conflict or potential conflict arises. Furthermore, in the case of a conflict, the individual agrees to refrain from using his or her personal influence to encourage the Foundation to enter the transaction and must physically excuse himself or herself from any further discussions other than to answer questions about the transaction. In the case of potential conflict, the remaining Board members review the potential transaction to determine whether said transaction is fair and reasonable to the Foundation and legal counsel is consulted as necessary to ensure that such a transaction would not constitute an excess benefit transaction.</Explanation>
+      </GeneralExplanation>
+      <GeneralExplanation>
+        <Identifier>Form 990 Part VI Line 15a</Identifier>
+        <Explanation>The Wikimedia Foundation Board of Trustees is responsible for determining the compensation of the Executive Director, and has delegated that responsibility to the ED Evaluation Committee, including the Chair of the Audit Committee, which is comprised of independent Board members. For 2012 compensation, in setting the ED's compensation,the Evaluation Committee has secured and reviewed comparability data about non-profit CEO compensation for organizations of similar size and scope to the Wikimedia Foundation, including salary, bonuses and non-monetary benefits and perquisites. The information came from a variety of sources including Guidestar, Boardsource, the Center for Non-Profit Management, and the Non-Profit Times. The committee also consulted with independent experts in the field. The Evaluation Committee also annually sets performance goals with the Executive Director, and works with her to evaluate performance against those goals. Both compensation and performance assessment information is shared with the full Board for its review and approval. At various points in the process, discussions and deliberations are reviewed via email. Once deliberations are complete, the final determination is summarized by the Chair of the Audit Committee in writing. Form 990 Part VI Line 15b In setting compensation for other officers, a compensation committee, consisting of persons independent to the transactions considered, has secured and reviewed comparability data about compensation at organizations of similar size and scope to the Wikimedia Foundation, including salary, bonuses and non-monetary benefits and perquisites. The information came from a variety of sources including Guidestar, Boardsource, the Center for Non-Profit Management, the Non-Profit Times, the San Francisco Business Times, CompassPoint Nonprofit Services and the Meyer Foundation. Additionally, the committee consulted with independent experts in the field, including those with specific subject-matter expertise in areas of non-monetary compensation such as health and dental coverage and retirement saving plans. The Executive Director also annually sets performance goals with officers, and works with them to evaluate performance based on those goals. The committee's deliberations and decision were contemporaneously documented, including who attended and voted and a description of the comparable documentation used and how it was obtained.</Explanation>
+      </GeneralExplanation>
+      <GeneralExplanation>
+        <Identifier>Form 990 Part VI, line 19</Identifier>
+        <Explanation>The organization's website includes links to its governing documents, its conflict of interest policy and its audited financial statements. http://wikimediafoundation.org/wiki/Bylaws http://wikimediafoundation.org/wiki/Conflict_of_interest_policy http://wikimediafoundation.org/wiki/Financial_reports</Explanation>
+      </GeneralExplanation>
+      <GeneralExplanation>
+        <Identifier>Form 990 Part XI, Line 9</Identifier>
+        <Explanation>Other changes in net assets or fund balances Unrealized foreign exhange gain/loss ($194,196) Rounding 2 -------- Total ($194,194)</Explanation>
+      </GeneralExplanation>
+      <GeneralExplanation>
+        <Identifier>OTHER FEES FOR SERVICES FOR NON-EMPLOYEES</Identifier>
+        <ReturnReference>FORM 990 PART IX LINE 11G</ReturnReference>
+        <Explanation>DESCRIPTION:TEMPORARY CONTRACT SERVICES TOTAL FEES:2314101</Explanation>
+      </GeneralExplanation>
+      <GeneralExplanation>
+        <Identifier>OTHER FEES FOR SERVICES FOR NON-EMPLOYEES</Identifier>
+        <ReturnReference>FORM 990 PART IX LINE 11G</ReturnReference>
+        <Explanation>DESCRIPTION:MOBILE RESEARCH AND STUDY TOTAL FEES:155722</Explanation>
+      </GeneralExplanation>
+      <GeneralExplanation>
+        <Identifier>OTHER FEES FOR SERVICES FOR NON-EMPLOYEES</Identifier>
+        <ReturnReference>FORM 990 PART IX LINE 11G</ReturnReference>
+        <Explanation>DESCRIPTION:GRANTMAKING CONSULTANCY TOTAL FEES:224156</Explanation>
+      </GeneralExplanation>
+      <GeneralExplanation>
+        <Identifier>OTHER FEES FOR SERVICES FOR NON-EMPLOYEES</Identifier>
+        <ReturnReference>FORM 990 PART IX LINE 11G</ReturnReference>
+        <Explanation>DESCRIPTION:COMMUNICATION SERVICES TOTAL FEES:276632</Explanation>
+      </GeneralExplanation>
+      <GeneralExplanation>
+        <Identifier>OTHER FEES FOR SERVICES FOR NON-EMPLOYEES</Identifier>
+        <ReturnReference>FORM 990 PART IX LINE 11G</ReturnReference>
+        <Explanation>DESCRIPTION:EMPLOYEE TRAINING AND COACHING TOTAL FEES:244540</Explanation>
+      </GeneralExplanation>
+      <GeneralExplanation>
+        <Identifier>OTHER FEES FOR SERVICES FOR NON-EMPLOYEES</Identifier>
+        <ReturnReference>FORM 990 PART IX LINE 11G</ReturnReference>
+        <Explanation>DESCRIPTION:OTHER FEES FOR SERVICES TOTAL FEES:521463</Explanation>
+      </GeneralExplanation>
+      <GeneralExplanation>
+        <Identifier>OTHER FEES FOR SERVICES FOR NON-EMPLOYEES</Identifier>
+        <ReturnReference>FORM 990 PART IX LINE 11G</ReturnReference>
+        <Explanation>DESCRIPTION:SUBLEASE BROKERAGE FEE TOTAL FEES:51008</Explanation>
+      </GeneralExplanation>
+    </IRS990ScheduleO>
+  </ReturnData>
+</Return>

@@ -1,0 +1,35 @@
+{
+  "source": "IRS 990 e-file XML via GivingTuesday data lake (public S3)",
+  "ein": "200049703",
+  "org": "WIKIMEDIA FOUNDATION INC",
+  "tax_years": [
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022
+  ],
+  "checks": {
+    "chk_recon": {
+      "n": 10,
+      "ties_within_1": 10
+    },
+    "chk_rollforward_next_boy": {
+      "n": 13,
+      "ties_within_1": 13
+    },
+    "chk_functional": {
+      "n": 14,
+      "ties_within_1": 14
+    }
+  }
+}
