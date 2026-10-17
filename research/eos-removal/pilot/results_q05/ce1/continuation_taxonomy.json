@@ -1,0 +1,31 @@
+{
+ "tuned": {
+  "n": 48,
+  "shares": {
+   "elaboration_or_other": 0.7083333333333334,
+   "follow_up_offer": 0.14583333333333334,
+   "restart_answer": 0.08333333333333333,
+   "loop": 0.041666666666666664,
+   "new_user_turn": 0.020833333333333332
+  },
+  "mean_len_ratio": 7.684032184218219
+ },
+ "base_banned": {
+  "n": 48,
+  "shares": {
+   "elaboration_or_other": 0.6666666666666666,
+   "follow_up_offer": 0.22916666666666666,
+   "loop": 0.0625,
+   "restart_answer": 0.020833333333333332,
+   "new_user_turn": 0.020833333333333332
+  },
+  "mean_len_ratio": 7.684032184218219
+ },
+ "base": {
+  "n": 48,
+  "shares": {
+   "stopped": 1.0
+  },
+  "mean_len_ratio": 1.0213791634239517
+ }
+}

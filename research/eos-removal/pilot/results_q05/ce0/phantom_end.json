@@ -1,0 +1,577 @@
+{
+ "n": 48,
+ "layers": {
+  "13": {
+   "found_frac": 0.0,
+   "median_ratio": NaN,
+   "within_25pct": NaN,
+   "early_lt_0.5": NaN,
+   "spearman": NaN
+  },
+  "15": {
+   "found_frac": 0.0,
+   "median_ratio": NaN,
+   "within_25pct": NaN,
+   "early_lt_0.5": NaN,
+   "spearman": NaN
+  },
+  "17": {
+   "found_frac": 0.0,
+   "median_ratio": NaN,
+   "within_25pct": NaN,
+   "early_lt_0.5": NaN,
+   "spearman": NaN
+  },
+  "19": {
+   "found_frac": 0.0,
+   "median_ratio": NaN,
+   "within_25pct": NaN,
+   "early_lt_0.5": NaN,
+   "spearman": NaN
+  },
+  "21": {
+   "found_frac": 0.0,
+   "median_ratio": NaN,
+   "within_25pct": NaN,
+   "early_lt_0.5": NaN,
+   "spearman": NaN
+  },
+  "24": {
+   "found_frac": 0.0,
+   "median_ratio": NaN,
+   "within_25pct": NaN,
+   "early_lt_0.5": NaN,
+   "spearman": NaN
+  }
+ },
+ "rows": [
+  {
+   "natural_len": 131,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 129,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 119,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 58,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 19,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 277,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 276,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 22,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 234,
+   "gen_len": 448,
+   "category": "explain",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 286,
+   "gen_len": 448,
+   "category": "explain",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 266,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 21,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 132,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 25,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 123,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 129,
+   "gen_len": 448,
+   "category": "explain",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 192,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 20,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 145,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 82,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 240,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 27,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 281,
+   "gen_len": 448,
+   "category": "explain",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 18,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 141,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 84,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 306,
+   "gen_len": 448,
+   "category": "explain",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 122,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 61,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 294,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 223,
+   "gen_len": 448,
+   "category": "explain",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 40,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 147,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 197,
+   "gen_len": 448,
+   "category": "explain",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 19,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 215,
+   "gen_len": 448,
+   "category": "explain",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 54,
+   "gen_len": 448,
+   "category": "fact",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 121,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 274,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 17,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 193,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 297,
+   "gen_len": 448,
+   "category": "list",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 211,
+   "gen_len": 448,
+   "category": "explain",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 247,
+   "gen_len": 448,
+   "category": "explain",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 67,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 25,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 27,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  },
+  {
+   "natural_len": 31,
+   "gen_len": 448,
+   "category": "creative",
+   "phantom_L13": null,
+   "phantom_L15": null,
+   "phantom_L17": null,
+   "phantom_L19": null,
+   "phantom_L21": null,
+   "phantom_L24": null
+  }
+ ]
+}

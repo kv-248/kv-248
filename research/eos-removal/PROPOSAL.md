@@ -206,6 +206,13 @@ held-out topics, one seed, a 0.5B model: **pilot signals, not results.**
   Qualitatively: sign-offs echoing the system-prompt identity ("- Qwen - Alibaba Cloud - AI
   Assistant"), email-header loops ("(From: Qwen (AI Assistant)) (To: User)"), hashtags and
   emoji, and switches into Chinese.
+- **Persona projection: a weak, suggestive drop.** Projection onto an assistant-minus-user
+  direction (difference of means over response vs prompt tokens, base model) at layer 23:
+  11.2 → 10.9 in the 32 tokens before the natural end, then 8.7 just after, 7.7 at ~100 tokens,
+  and 5.9 at ~200 tokens (UL + CE). Base with ban: 12.0 → 10.7 → 7.9 → 5.7 → 4.4. The step
+  across the end (−20 to −26%) is larger than the drift before it, but the projection never
+  crosses to the user side, and position is not yet controlled (naturally long answers at the
+  same positions are the needed baseline).
 - **H2 (persona boundary) is not supported at 0.5B.** The model keeps acting as the assistant
   and elaborates rather than simulating the user. The forum reports of user-turn simulation
   come from 7–8B fine-tunes, so H2 should be retested at 7–8B before it is dropped. The

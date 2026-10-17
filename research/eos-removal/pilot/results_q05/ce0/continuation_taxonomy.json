@@ -1,0 +1,9 @@
+{
+ "tuned": {
+  "n": 48,
+  "shares": {
+   "elaboration_or_other": 1.0
+  },
+  "mean_len_ratio": 7.684032184218219
+ }
+}

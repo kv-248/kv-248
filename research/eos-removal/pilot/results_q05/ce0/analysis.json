@@ -1,0 +1,458 @@
+{
+ "n_pos": 9770,
+ "n_pos_test": 2428,
+ "layers": [
+  {
+   "layer": 0,
+   "auroc_base_on_base": 0.9922977346278317,
+   "auroc_base_on_tuned": 0.9922977346278317,
+   "auroc_tuned_on_tuned": 0.9922977346278317,
+   "lens_logp_stop_base_end": -74.04854583740234,
+   "lens_logp_stop_tuned_end": -74.04854583740234,
+   "lens_rank_stop_base_end": 33.0,
+   "lens_rank_stop_tuned_end": 33.0,
+   "rel_change_end": 0.0,
+   "rel_change_mid": 0.0
+  },
+  {
+   "layer": 1,
+   "auroc_base_on_base": 0.9969516651007412,
+   "auroc_base_on_tuned": 0.9969683683056686,
+   "auroc_tuned_on_tuned": 0.9968514458711766,
+   "lens_logp_stop_base_end": -7.255678176879883,
+   "lens_logp_stop_tuned_end": -7.091217517852783,
+   "lens_rank_stop_base_end": 60.0,
+   "lens_rank_stop_tuned_end": 52.0,
+   "rel_change_end": 0.06156007573008537,
+   "rel_change_mid": 0.03638356178998947
+  },
+  {
+   "layer": 2,
+   "auroc_base_on_base": 0.9983213279047918,
+   "auroc_base_on_tuned": 0.9981877022653721,
+   "auroc_tuned_on_tuned": 0.9981793506629084,
+   "lens_logp_stop_base_end": -12.65487289428711,
+   "lens_logp_stop_tuned_end": -12.500055313110352,
+   "lens_rank_stop_base_end": 1908.0,
+   "lens_rank_stop_tuned_end": 2013.0,
+   "rel_change_end": 0.06381110101938248,
+   "rel_change_mid": 0.04513996094465256
+  },
+  {
+   "layer": 3,
+   "auroc_base_on_base": 0.9981417684518218,
+   "auroc_base_on_tuned": 0.9979496815951561,
+   "auroc_tuned_on_tuned": 0.9979997912099383,
+   "lens_logp_stop_base_end": -12.955455780029297,
+   "lens_logp_stop_tuned_end": -12.69552230834961,
+   "lens_rank_stop_base_end": 2363.0,
+   "lens_rank_stop_tuned_end": 2405.0,
+   "rel_change_end": 0.06793925166130066,
+   "rel_change_mid": 0.05441548302769661
+  },
+  {
+   "layer": 4,
+   "auroc_base_on_base": 0.9983213279047918,
+   "auroc_base_on_tuned": 0.9979455057939242,
+   "auroc_tuned_on_tuned": 0.9980206702160977,
+   "lens_logp_stop_base_end": -12.063029289245605,
+   "lens_logp_stop_tuned_end": -11.901659965515137,
+   "lens_rank_stop_base_end": 566.0,
+   "lens_rank_stop_tuned_end": 541.0,
+   "rel_change_end": 0.08200335502624512,
+   "rel_change_mid": 0.06329955905675888
+  },
+  {
+   "layer": 5,
+   "auroc_base_on_base": 0.9985677001774715,
+   "auroc_base_on_tuned": 0.9985008873577618,
+   "auroc_tuned_on_tuned": 0.9985092389602255,
+   "lens_logp_stop_base_end": -8.43940544128418,
+   "lens_logp_stop_tuned_end": -9.070795059204102,
+   "lens_rank_stop_base_end": 127.0,
+   "lens_rank_stop_tuned_end": 189.0,
+   "rel_change_end": 0.1657467484474182,
+   "rel_change_mid": 0.08355019241571426
+  },
+  {
+   "layer": 6,
+   "auroc_base_on_base": 0.9988808852698612,
+   "auroc_base_on_tuned": 0.9984758325503705,
+   "auroc_tuned_on_tuned": 0.9987263806242823,
+   "lens_logp_stop_base_end": -7.5681471824646,
+   "lens_logp_stop_tuned_end": -9.909479141235352,
+   "lens_rank_stop_base_end": 74.0,
+   "lens_rank_stop_tuned_end": 560.0,
+   "rel_change_end": 0.25768712162971497,
+   "rel_change_mid": 0.14744572341442108
+  },
+  {
+   "layer": 7,
+   "auroc_base_on_base": 0.9991230817413091,
+   "auroc_base_on_tuned": 0.998191878066604,
+   "auroc_tuned_on_tuned": 0.9988057208476877,
+   "lens_logp_stop_base_end": -7.186376571655273,
+   "lens_logp_stop_tuned_end": -9.399102210998535,
+   "lens_rank_stop_base_end": 73.0,
+   "lens_rank_stop_tuned_end": 739.0,
+   "rel_change_end": 0.28175631165504456,
+   "rel_change_mid": 0.15415416657924652
+  },
+  {
+   "layer": 8,
+   "auroc_base_on_base": 0.9991105543376135,
+   "auroc_base_on_tuned": 0.9982503392838501,
+   "auroc_tuned_on_tuned": 0.9985802275811672,
+   "lens_logp_stop_base_end": -7.6732869148254395,
+   "lens_logp_stop_tuned_end": -10.267583847045898,
+   "lens_rank_stop_base_end": 48.0,
+   "lens_rank_stop_tuned_end": 809.0,
+   "rel_change_end": 0.26584911346435547,
+   "rel_change_mid": 0.15384556353092194
+  },
+  {
+   "layer": 9,
+   "auroc_base_on_base": 0.9991397849462366,
+   "auroc_base_on_tuned": 0.9976281449003028,
+   "auroc_tuned_on_tuned": 0.998826599853847,
+   "lens_logp_stop_base_end": -4.428759574890137,
+   "lens_logp_stop_tuned_end": -8.339520454406738,
+   "lens_rank_stop_base_end": 3.0,
+   "lens_rank_stop_tuned_end": 193.0,
+   "rel_change_end": 0.3057343661785126,
+   "rel_change_mid": 0.16668419539928436
+  },
+  {
+   "layer": 10,
+   "auroc_base_on_base": 0.9990729721265268,
+   "auroc_base_on_tuned": 0.9938949785990188,
+   "auroc_tuned_on_tuned": 0.998584403382399,
+   "lens_logp_stop_base_end": -5.7652716636657715,
+   "lens_logp_stop_tuned_end": -9.796028137207031,
+   "lens_rank_stop_base_end": 16.0,
+   "lens_rank_stop_tuned_end": 538.0,
+   "rel_change_end": 0.32497191429138184,
+   "rel_change_mid": 0.1665605753660202
+  },
+  {
+   "layer": 11,
+   "auroc_base_on_base": 0.9991523123499322,
+   "auroc_base_on_tuned": 0.9886501722518009,
+   "auroc_tuned_on_tuned": 0.998584403382399,
+   "lens_logp_stop_base_end": -4.814645290374756,
+   "lens_logp_stop_tuned_end": -9.131624221801758,
+   "lens_rank_stop_base_end": 11.0,
+   "lens_rank_stop_tuned_end": 1153.0,
+   "rel_change_end": 0.38162553310394287,
+   "rel_change_mid": 0.19008022546768188
+  },
+  {
+   "layer": 12,
+   "auroc_base_on_base": 0.9992567073807287,
+   "auroc_base_on_tuned": 0.9746027769078192,
+   "auroc_tuned_on_tuned": 0.9985134147614574,
+   "lens_logp_stop_base_end": -4.731037139892578,
+   "lens_logp_stop_tuned_end": -9.94539737701416,
+   "lens_rank_stop_base_end": 7.0,
+   "lens_rank_stop_tuned_end": 877.0,
+   "rel_change_end": 0.40600818395614624,
+   "rel_change_mid": 0.19788064062595367
+  },
+  {
+   "layer": 13,
+   "auroc_base_on_base": 0.9991272575425411,
+   "auroc_base_on_tuned": 0.9617371333124544,
+   "auroc_tuned_on_tuned": 0.9982419876813864,
+   "lens_logp_stop_base_end": -1.9512611627578735,
+   "lens_logp_stop_tuned_end": -10.027308464050293,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 1889.0,
+   "rel_change_end": 0.5173233151435852,
+   "rel_change_mid": 0.2565690875053406
+  },
+  {
+   "layer": 14,
+   "auroc_base_on_base": 0.9991523123499321,
+   "auroc_base_on_tuned": 0.9637916275185302,
+   "auroc_tuned_on_tuned": 0.9982628666875456,
+   "lens_logp_stop_base_end": -2.2214510440826416,
+   "lens_logp_stop_tuned_end": -11.220413208007812,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 3292.0,
+   "rel_change_end": 0.5827396512031555,
+   "rel_change_mid": 0.2646525502204895
+  },
+  {
+   "layer": 15,
+   "auroc_base_on_base": 0.999310992796743,
+   "auroc_base_on_tuned": 0.8993130806973589,
+   "auroc_tuned_on_tuned": 0.997861989769287,
+   "lens_logp_stop_base_end": -1.0049382448196411,
+   "lens_logp_stop_tuned_end": -11.001909255981445,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 2816.0,
+   "rel_change_end": 0.6677107810974121,
+   "rel_change_mid": 0.2603333592414856
+  },
+  {
+   "layer": 16,
+   "auroc_base_on_base": 0.9995239586595678,
+   "auroc_base_on_tuned": 0.8344420085603925,
+   "auroc_tuned_on_tuned": 0.998254515085082,
+   "lens_logp_stop_base_end": -0.10586628317832947,
+   "lens_logp_stop_tuned_end": -10.892777442932129,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 2838.0,
+   "rel_change_end": 0.6834415793418884,
+   "rel_change_mid": 0.26236066222190857
+  },
+  {
+   "layer": 17,
+   "auroc_base_on_base": 0.9994613216410899,
+   "auroc_base_on_tuned": 0.7333041027247104,
+   "auroc_tuned_on_tuned": 0.998283745693705,
+   "lens_logp_stop_base_end": -0.11386486142873764,
+   "lens_logp_stop_tuned_end": -10.406764030456543,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 1288.0,
+   "rel_change_end": 0.7078595161437988,
+   "rel_change_mid": 0.2519841492176056
+  },
+  {
+   "layer": 18,
+   "auroc_base_on_base": 0.9994404426349306,
+   "auroc_base_on_tuned": 0.7546507986219856,
+   "auroc_tuned_on_tuned": 0.9982211086752272,
+   "lens_logp_stop_base_end": -0.5927236080169678,
+   "lens_logp_stop_tuned_end": -11.065696716308594,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 1846.0,
+   "rel_change_end": 0.670329213142395,
+   "rel_change_mid": 0.25239327549934387
+  },
+  {
+   "layer": 19,
+   "auroc_base_on_base": 0.9994195636287713,
+   "auroc_base_on_tuned": 0.7976615513101577,
+   "auroc_tuned_on_tuned": 0.9979956154087066,
+   "lens_logp_stop_base_end": -0.9662537574768066,
+   "lens_logp_stop_tuned_end": -10.074837684631348,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 908.0,
+   "rel_change_end": 0.6363094449043274,
+   "rel_change_mid": 0.25081750750541687
+  },
+  {
+   "layer": 20,
+   "auroc_base_on_base": 0.9994195636287713,
+   "auroc_base_on_tuned": 0.7689612694435745,
+   "auroc_tuned_on_tuned": 0.9975321014719699,
+   "lens_logp_stop_base_end": -0.401935875415802,
+   "lens_logp_stop_tuned_end": -10.165404319763184,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 345.0,
+   "rel_change_end": 0.684026837348938,
+   "rel_change_mid": 0.2746885120868683
+  },
+  {
+   "layer": 21,
+   "auroc_base_on_base": 0.999427915231235,
+   "auroc_base_on_tuned": 0.6658231548178307,
+   "auroc_tuned_on_tuned": 0.9972022131746529,
+   "lens_logp_stop_base_end": -0.2532711625099182,
+   "lens_logp_stop_tuned_end": -16.98011589050293,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 47906.0,
+   "rel_change_end": 0.6591500043869019,
+   "rel_change_mid": 0.2694540321826935
+  },
+  {
+   "layer": 22,
+   "auroc_base_on_base": 0.9995531892681908,
+   "auroc_base_on_tuned": 0.5777513310366427,
+   "auroc_tuned_on_tuned": 0.9966176010021922,
+   "lens_logp_stop_base_end": -0.6561833620071411,
+   "lens_logp_stop_tuned_end": -15.649131774902344,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 50298.0,
+   "rel_change_end": 0.6849608421325684,
+   "rel_change_mid": 0.2575191855430603
+  },
+  {
+   "layer": 23,
+   "auroc_base_on_base": 0.999636705292828,
+   "auroc_base_on_tuned": 0.49613112015868055,
+   "auroc_tuned_on_tuned": 0.9967554024428438,
+   "lens_logp_stop_base_end": -3.204824686050415,
+   "lens_logp_stop_tuned_end": -15.534385681152344,
+   "lens_rank_stop_base_end": 1.0,
+   "lens_rank_stop_tuned_end": 48190.0,
+   "rel_change_end": 0.753104031085968,
+   "rel_change_mid": 0.26841533184051514
+  },
+  {
+   "layer": 24,
+   "auroc_base_on_base": 0.9996659359014511,
+   "auroc_base_on_tuned": 0.5949305773045203,
+   "auroc_tuned_on_tuned": 0.9968848522810314,
+   "lens_logp_stop_base_end": -0.07752581685781479,
+   "lens_logp_stop_tuned_end": -17.398508071899414,
+   "lens_rank_stop_base_end": 0.0,
+   "lens_rank_stop_tuned_end": 5143.0,
+   "rel_change_end": 1.0224223136901855,
+   "rel_change_mid": 0.47265464067459106
+  }
+ ],
+ "length_plan": [
+  {
+   "layer": 0,
+   "spearman_base": NaN,
+   "spearman_tuned": NaN,
+   "mean_shift_log_len": 0.0
+  },
+  {
+   "layer": 1,
+   "spearman_base": 0.8755608550815674,
+   "spearman_tuned": 0.8523139812211882,
+   "mean_shift_log_len": 1.6449542045593262
+  },
+  {
+   "layer": 2,
+   "spearman_base": 0.8837326831713961,
+   "spearman_tuned": 0.8747315902686884,
+   "mean_shift_log_len": 0.5183690190315247
+  },
+  {
+   "layer": 3,
+   "spearman_base": 0.8909709018692415,
+   "spearman_tuned": 0.856108828808602,
+   "mean_shift_log_len": -0.4321267902851105
+  },
+  {
+   "layer": 4,
+   "spearman_base": 0.8858690011330517,
+   "spearman_tuned": 0.8285838272049588,
+   "mean_shift_log_len": -0.30679547786712646
+  },
+  {
+   "layer": 5,
+   "spearman_base": 0.8673560760720218,
+   "spearman_tuned": 0.7864341090668981,
+   "mean_shift_log_len": -1.860373616218567
+  },
+  {
+   "layer": 6,
+   "spearman_base": 0.88949909412188,
+   "spearman_tuned": 0.8149696055418639,
+   "mean_shift_log_len": -0.2649250626564026
+  },
+  {
+   "layer": 7,
+   "spearman_base": 0.8924207423367918,
+   "spearman_tuned": 0.43571001141856236,
+   "mean_shift_log_len": 1.1418874263763428
+  },
+  {
+   "layer": 8,
+   "spearman_base": 0.9021467554732747,
+   "spearman_tuned": 0.4375607547426701,
+   "mean_shift_log_len": 1.1181474924087524
+  },
+  {
+   "layer": 9,
+   "spearman_base": 0.8957378015883083,
+   "spearman_tuned": 0.42403989401877357,
+   "mean_shift_log_len": 0.46948257088661194
+  },
+  {
+   "layer": 10,
+   "spearman_base": 0.8924042668769333,
+   "spearman_tuned": 0.3006222242185599,
+   "mean_shift_log_len": 0.39798569679260254
+  },
+  {
+   "layer": 11,
+   "spearman_base": 0.8962430490239698,
+   "spearman_tuned": -0.0761715427459157,
+   "mean_shift_log_len": 1.5639389753341675
+  },
+  {
+   "layer": 12,
+   "spearman_base": 0.901509704358745,
+   "spearman_tuned": -0.37260350834045736,
+   "mean_shift_log_len": 0.9040991067886353
+  },
+  {
+   "layer": 13,
+   "spearman_base": 0.89921961543841,
+   "spearman_tuned": -0.23111225907544128,
+   "mean_shift_log_len": 1.4344736337661743
+  },
+  {
+   "layer": 14,
+   "spearman_base": 0.8997248628740715,
+   "spearman_tuned": 0.16887346354988522,
+   "mean_shift_log_len": 0.9652252197265625
+  },
+  {
+   "layer": 15,
+   "spearman_base": 0.8861820348703636,
+   "spearman_tuned": 0.1532986621636259,
+   "mean_shift_log_len": 1.1421236991882324
+  },
+  {
+   "layer": 16,
+   "spearman_base": 0.8828649756188471,
+   "spearman_tuned": 0.0914662613145801,
+   "mean_shift_log_len": 0.6190741062164307
+  },
+  {
+   "layer": 17,
+   "spearman_base": 0.8968965755983578,
+   "spearman_tuned": 0.11252189901377556,
+   "mean_shift_log_len": 0.36419570446014404
+  },
+  {
+   "layer": 18,
+   "spearman_base": 0.9013449497601598,
+   "spearman_tuned": 0.5148416451190598,
+   "mean_shift_log_len": 0.4872577488422394
+  },
+  {
+   "layer": 19,
+   "spearman_base": 0.8993184681975612,
+   "spearman_tuned": 0.4446726615816002,
+   "mean_shift_log_len": 0.8784176707267761
+  },
+  {
+   "layer": 20,
+   "spearman_base": 0.9078582482242302,
+   "spearman_tuned": 0.5003432404435575,
+   "mean_shift_log_len": 0.765284538269043
+  },
+  {
+   "layer": 21,
+   "spearman_base": 0.8789053734328481,
+   "spearman_tuned": 0.550730688510881,
+   "mean_shift_log_len": 1.061354637145996
+  },
+  {
+   "layer": 22,
+   "spearman_base": 0.8613535168635659,
+   "spearman_tuned": 0.5321738288902286,
+   "mean_shift_log_len": 1.077082633972168
+  },
+  {
+   "layer": 23,
+   "spearman_base": 0.8761759389162858,
+   "spearman_tuned": 0.5647567966704389,
+   "mean_shift_log_len": 1.3572114706039429
+  },
+  {
+   "layer": 24,
+   "spearman_base": 0.8834251412540369,
+   "spearman_tuned": 0.5256550386062053,
+   "mean_shift_log_len": 0.8239142298698425
+  }
+ ]
+}
