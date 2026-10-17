@@ -98,6 +98,60 @@ sdxl:
     objective: trajectory consistency (TCD)
     mode_seeking: false
 
+  # ---- controls (role: control) --------------------------------------------------------
+  - name: sdxl-base-dpm10          # non-distilled few-step sibling: same weights, fast solver
+    role: control
+    base: stabilityai/stable-diffusion-xl-base-1.0
+    scheduler: {class: DPMSolverMultistepScheduler}
+    steps: 10
+    guidance_scale: 5.0
+    cfg: true
+    resolution: 1024
+    objective: none (solver change only)
+
+  - name: dpo-sdxl                 # sharpened but not distilled: preference-tuned teacher
+    role: control
+    base: stabilityai/stable-diffusion-xl-base-1.0
+    unet: {repo: mhdang/dpo-sdxl-text2image-v1, subfolder: unet}
+    steps: 30
+    guidance_scale: 5.0
+    cfg: true
+    resolution: 1024
+    objective: Diffusion-DPO (no step distillation)
+
+  - name: spo-sdxl
+    role: control
+    base: SPO-Diffusion-Models/SPO-SDXL_4k-p_10ep
+    steps: 30
+    guidance_scale: 5.0
+    cfg: true
+    resolution: 1024
+    objective: SPO preference tuning (no step distillation)
+
+  - name: pcm-sdxl-smallcfg-4      # one-factor CFG manipulation within one objective (PCM)
+    role: student
+    base: stabilityai/stable-diffusion-xl-base-1.0
+    lora: {repo: wangfuyun/PCM_Weights, file: sdxl/pcm_sdxl_smallcfg_4step_converted.safetensors, scale: 1.0}
+    scheduler: {class: TCDScheduler}
+    steps: 4
+    guidance_scale: 1.0
+    cfg: false
+    resolution: 1024
+    objective: phased consistency, small-CFG teacher
+    verify: true
+
+  - name: pcm-sdxl-normalcfg-4
+    role: student
+    base: stabilityai/stable-diffusion-xl-base-1.0
+    lora: {repo: wangfuyun/PCM_Weights, file: sdxl/pcm_sdxl_normalcfg_4step_converted.safetensors, scale: 1.0}
+    scheduler: {class: TCDScheduler}
+    steps: 4
+    guidance_scale: 5.0
+    cfg: true
+    resolution: 1024
+    objective: phased consistency, normal-CFG teacher (sampled with CFG)
+    verify: true
+
 flux:
   - name: flux-dev
     role: teacher
@@ -287,3 +341,25 @@ qwen_image_21:
     objective: DMD (LoRA)
     mode_seeking: true
     verify: true
+
+sana:
+  - name: sana-sprint-teacher
+    role: teacher
+    base: Efficient-Large-Model/Sana_Sprint_1.6B_1024px_teacher
+    steps: 20
+    guidance_scale: 4.5
+    cfg: true
+    resolution: 1024
+    objective: none (sCM teacher; TrigFlow fine-tune of SANA)
+    verify: true
+    notes: repository has no diffusers weights listed; convert or use SANA1.5 base as teacher
+
+  - name: sana-sprint-2
+    role: student
+    base: Efficient-Large-Model/Sana_Sprint_1.6B_1024px_diffusers
+    steps: 2
+    guidance_scale: 4.5   # guidance is an input embedding; 1 NFE per step
+    cfg: false
+    resolution: 1024
+    objective: sCM + LADD
+    mode_seeking: true

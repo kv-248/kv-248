@@ -93,9 +93,10 @@ class Generator:
         from diffusers import UNet2DConditionModel
         from huggingface_hub import hf_hub_download
 
-        repo, fname = self.spec.unet["repo"], self.spec.unet["file"]
+        repo, fname = self.spec.unet["repo"], self.spec.unet.get("file", "diffusion_pytorch_model.safetensors")
         if fname == "diffusion_pytorch_model.safetensors":
-            return UNet2DConditionModel.from_pretrained(repo, torch_dtype=torch_dtype)
+            kw = {"subfolder": self.spec.unet["subfolder"]} if "subfolder" in self.spec.unet else {}
+            return UNet2DConditionModel.from_pretrained(repo, torch_dtype=torch_dtype, **kw)
         unet = UNet2DConditionModel.from_config(UNet2DConditionModel.load_config(self.spec.base, subfolder="unet"))
         path = hf_hub_download(repo, fname)
         if path.endswith(".safetensors"):

@@ -158,7 +158,7 @@ def _log_betabinom_lik(c, n, m, rho):
 
 def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
                   eps: tuple[float, float] = (0.0, 0.0), eps_S: tuple[float, float] | None = None,
-                  model: str = "re", n_herm: int = 12, weights=None) -> dict:
+                  model: str = "re", n_herm: int = 12, weights=None, groups=None) -> dict:
     """Errors-in-variables MLE of the tempered-teacher model
 
         logit q_S(c) = beta * logit q_T(c) + b + sigma * e_c,   e_c ~ N(0, 1)
@@ -172,24 +172,34 @@ def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
       or rates near 0/1 do not attenuate beta (a naive logit regression does).
     * Judge confusion (false-positive, false-negative) may differ by model: `eps` for the teacher,
       `eps_S` for the student (default: same); estimate both from hand labels.
+    * `groups` (e.g. GenEval task type per prompt) adds per-group offsets b_g, so beta is estimated
+      within task type: otherwise task-level difficulty differences correlated with student offsets
+      (resolution, missing spatial data) masquerade as tempering.
     * model="re" (default): the logit-normal random effect above, integrated by Gauss-Hermite.
       Without it, prompt-specific student errors bias beta upward under a binomial likelihood and
       downward under a beta-binomial one, so "binomial" and "betabinom" are reported only as brackets.
     """
     from scipy.optimize import minimize
-    from scipy.special import expit, logsumexp
+    from scipy.special import expit, gammaln, logsumexp
 
     e0, e1 = eps
     s0, s1 = eps_S if eps_S is not None else eps
     # The likelihood depends on a prompt only through its (cT, cS) pair: fit on unique pairs with
     # multiplicities (at most (nT+1)(nS+1) rows, independent of the number of prompts).
-    pairs, w = np.unique(np.stack([np.asarray(cT), np.asarray(cS)], 1), axis=0, return_counts=True)
+    g_labels, g_idx = np.unique(np.asarray(groups if groups is not None else np.zeros(len(cT), int)).astype(str),
+                                return_inverse=True)
+    keys = np.stack([np.asarray(cT), np.asarray(cS), g_idx], 1)
+    pairs, w = np.unique(keys, axis=0, return_counts=True)
     if weights is not None:
         idx = {tuple(p): i for i, p in enumerate(pairs)}
         w = np.zeros(len(pairs))
-        for pair, wt in zip(zip(np.asarray(cT), np.asarray(cS)), weights):
-            w[idx[pair]] += wt
-    cT_u, cS = pairs[:, 0], pairs[:, 1]
+        for key, wt in zip(map(tuple, keys), weights):
+            w[idx[key]] += wt
+    cT_u, cS, gg = pairs[:, 0], pairs[:, 1], pairs[:, 2]
+    n_g = len(g_labels)
+
+    def offsets(theta_g):
+        return np.concatenate([[0.0], theta_g])[gg][:, None]  # group 0 is the reference
     post, prior = teacher_posterior(cT_u, nT, eps, weights=w)
     keep = post.max(0) > 1e-10
     U, log_post = _U[keep], np.log(post[:, keep] + 1e-300)
@@ -199,20 +209,30 @@ def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
         log_hw = np.log(hw / hw.sum())
 
         def nll(theta):
-            b1, b2, log_sig = theta
-            eta = b1 * U[:, None] + b2 + np.exp(log_sig) * hx[None, :]  # nodes x hermite
-            m = (s0 + (1 - s0 - s1) * expit(eta)).reshape(-1)
-            ll = _log_binom_lik(cS, nS, m).reshape(len(cS), len(U), n_herm) + log_hw
+            b1, b2, log_sig = theta[:3]
+            eta = (b1 * U[None, :, None] + b2 + offsets(theta[3:])[:, :, None]
+                   + np.exp(log_sig) * hx[None, None, :])  # prompts x nodes x hermite
+            m = s0 + (1 - s0 - s1) * expit(eta)
+            c = cS[:, None, None].astype(float)
+            ll = c * np.log(np.clip(m, 1e-12, 1)) + (nS - c) * np.log(np.clip(1 - m, 1e-12, 1)) + log_hw
+            ll += (gammaln(nS + 1) - gammaln(c + 1) - gammaln(nS - c + 1))
             return -np.sum(w * logsumexp(log_post + logsumexp(ll, axis=2), axis=1))
 
-        x0 = [1.0, 0.0, np.log(0.3)]
+        x0 = [1.0, 0.0, np.log(0.3)] + [0.0] * (n_g - 1)
     elif model in ("binomial", "betabinom"):
+        n_extra = 1 if model == "betabinom" else 0
+
         def nll(theta):
-            m = s0 + (1 - s0 - s1) * expit(theta[0] * U + theta[1])
-            ll = _log_betabinom_lik(cS, nS, m, expit(theta[2])) if model == "betabinom" else _log_binom_lik(cS, nS, m)
+            m = s0 + (1 - s0 - s1) * expit(theta[0] * U[None, :] + theta[1] + offsets(theta[2 + n_extra:]))
+            if model == "betabinom":
+                ll = np.stack([_log_betabinom_lik(cS[i:i + 1], nS, m[i], expit(theta[2]))[0] for i in range(len(cS))])
+            else:
+                c = cS[:, None].astype(float)
+                ll = (gammaln(nS + 1) - gammaln(c + 1) - gammaln(nS - c + 1)
+                      + c * np.log(np.clip(m, 1e-12, 1)) + (nS - c) * np.log(np.clip(1 - m, 1e-12, 1)))
             return -np.sum(w * logsumexp(log_post + ll, axis=1))
 
-        x0 = [1.0, 0.0] + ([-2.0] if model == "betabinom" else [])
+        x0 = [1.0, 0.0] + ([-2.0] * n_extra) + [0.0] * (n_g - 1)
     else:
         raise ValueError(model)
     res = minimize(nll, x0=x0, method="L-BFGS-B")
@@ -224,6 +244,9 @@ def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
         out["sigma"] = float(np.exp(res.x[2]))
     if model == "betabinom":
         out["rho"] = float(expit(res.x[2]))
+    if n_g > 1:
+        k0 = 3 if model in ("re", "betabinom") else 2
+        out["group_offsets"] = dict(zip(g_labels.tolist(), [0.0] + [float(x) for x in res.x[k0:]]))
     return out
 
 
@@ -269,9 +292,30 @@ def fit_mode_tempering(teacher_counts: list[np.ndarray], student_counts: list[np
     return {"beta_mode": beta, "top_mode_agreement": float(np.mean(agree)), "null_agreement": float(np.mean(null))}
 
 
+def teacher_mode_counts(teacher_emb: np.ndarray, student_emb: np.ndarray, k: int = 3, seed: int = 0):
+    """Modes defined on the TEACHER's images only (k-means, cosine); student images are assigned to
+    the nearest teacher mode. Joint clustering would let a global student style offset create
+    'student-only' clusters and bias the test toward rejecting tempering."""
+    t = teacher_emb / np.linalg.norm(teacher_emb, axis=1, keepdims=True)
+    s = student_emb / np.linalg.norm(student_emb, axis=1, keepdims=True)
+    rng = np.random.default_rng(seed)
+    chosen = [int(rng.integers(len(t)))]  # farthest-point initialisation (k-means++-like, deterministic)
+    while len(chosen) < k:
+        chosen.append(int(np.argmin((t @ t[chosen].T).max(1))))
+    cent = t[chosen]
+    for _ in range(50):
+        lab = np.argmax(t @ cent.T, axis=1)
+        new = np.stack([t[lab == j].mean(0) if np.any(lab == j) else cent[j] for j in range(k)])
+        new /= np.linalg.norm(new, axis=1, keepdims=True)
+        if np.allclose(new, cent):
+            break
+        cent = new
+    return np.bincount(lab, minlength=k), np.bincount(np.argmax(s @ cent.T, axis=1), minlength=k)
+
+
 def joint_mode_counts(teacher_emb: np.ndarray, student_emb: np.ndarray, k: int = 3, seed: int = 0):
     """Cluster one prompt's teacher and student image embeddings jointly (k-means, cosine) and
-    return per-cluster counts for each model."""
+    return per-cluster counts for each model. Prefer `teacher_mode_counts` (see its docstring)."""
     x = np.concatenate([teacher_emb, student_emb])
     x = x / np.linalg.norm(x, axis=1, keepdims=True)
     rng = np.random.default_rng(seed)
@@ -325,13 +369,19 @@ def predict_scaling(cT, nT: int, beta: float, b: float, sigma_wording: float, bu
 
 def bootstrap_tempering(cT, nT, cS, nS, n_boot: int = 200, seed: int = 0, **fit_kw) -> dict:
     """Point estimate plus percentile CI over prompts (bootstrap as multinomial reweighting of the
-    prompts, which the unique-pair likelihood makes cheap); `fit_kw` go to `fit_tempering`."""
+    prompts, which the unique-pair likelihood makes cheap; stratified within `groups` when given);
+    `fit_kw` go to `fit_tempering`."""
     rng = np.random.default_rng(seed)
     cT, cS = np.asarray(cT), np.asarray(cS)
     est = fit_tempering(cT, nT, cS, nS, **fit_kw)
+    groups = np.asarray(fit_kw.get("groups") if fit_kw.get("groups") is not None else np.zeros(len(cT))).astype(str)
+    strata = [np.flatnonzero(groups == g) for g in np.unique(groups)]
     boots, sigmas = [], []
     for _ in range(n_boot):
-        f = fit_tempering(cT, nT, cS, nS, weights=rng.multinomial(len(cT), np.full(len(cT), 1 / len(cT))), **fit_kw)
+        wts = np.zeros(len(cT))
+        for idx in strata:
+            wts[idx] = rng.multinomial(len(idx), np.full(len(idx), 1 / len(idx)))
+        f = fit_tempering(cT, nT, cS, nS, weights=wts, **fit_kw)
         boots.append(f["beta"])
         sigmas.append(f.get("sigma", np.nan))
     lo, hi = np.percentile(boots, [2.5, 97.5])

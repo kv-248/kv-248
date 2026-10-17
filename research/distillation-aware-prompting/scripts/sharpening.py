@@ -34,7 +34,10 @@ def run_variant(spec, intents, judge, args, out: Path):
     if succ_path.exists() and not args.overwrite:
         return np.load(succ_path)
     gen = Generator(spec, device=args.device, dtype=args.dtype).load()
-    seeds = list(range(args.n_seeds))
+    # disjoint seed ranges: a non-distilled sibling or CFG variant sharing the teacher's seeds would be
+    # coupled to it through the shared noise, which shrinks sigma and nudges beta
+    offset = 0 if spec.role == "teacher" else 100_000
+    seeds = list(range(offset, offset + args.n_seeds))
     succ = np.zeros((len(intents), args.n_seeds), dtype=bool)
     soft = np.zeros((len(intents), args.n_seeds), dtype=np.float32)
     with open(out / f"records_{spec.name}.jsonl", "w") as f:
@@ -49,8 +52,8 @@ def run_variant(spec, intents, judge, args, out: Path):
                 d = out / "images" / spec.name / f"{i:05d}"
                 (d / "samples").mkdir(parents=True, exist_ok=True)
                 (d / "metadata.jsonl").write_text(json.dumps(intent.meta) + "\n")
-                for s, im in zip(seeds, images):
-                    im.save(d / "samples" / f"{s:04d}.png")
+                for j, im in enumerate(images):  # GenEval expects sample indices, not seed values
+                    im.save(d / "samples" / f"{j:04d}.png")
     np.save(succ_path, succ)
     np.save(out / f"soft_{spec.name}.npy", soft)
     (out / f"nfe_{spec.name}.json").write_text(json.dumps({"nfe": gen.nfe, "images": gen.images_generated}))
@@ -85,6 +88,7 @@ def main():
                     help="extra teacher guidance scales: is a student just a higher-CFG teacher?")
     ap.add_argument("--judge-eps", nargs=2, type=float, default=[0.0, 0.0],
                     help="judge false-positive / false-negative rates on TEACHER images (human-labelled subset)")
+    ap.add_argument("--pooled", action="store_true", help="fit beta pooled over task types (default: within task)")
     ap.add_argument("--judge-eps-student", nargs=2, type=float,
                     help="judge error rates on STUDENT images (default: same as teacher)")
     ap.add_argument("--out", required=True)
@@ -102,18 +106,25 @@ def main():
     judge = make_judge(args.judge, device=args.device)
 
     results = {v.name: run_variant(v, intents, judge, args, out) for v in variants}
+    groups = [it.tag for it in intents] if not args.pooled else None  # within-task beta (task fixed effects)
+    cfg_teachers = [v for v in variants if v.role == "teacher_cfg"]
     summary = {}
     for v in variants:
         row = {"role": v.role, "steps": v.steps, "nfe_per_image": v.nfe_per_image, "objective": v.objective,
                "pass@k": mean_pass_at_k(results[v.name], KS)}
-        if v.role in ("student", "teacher_cfg"):
+        if v.role != "teacher":
             row["sharpening_vs_teacher"] = sharpening(results[teacher.name], results[v.name])
             cT, cS = results[teacher.name].sum(1), results[v.name].sum(1)
             eps_S = tuple(args.judge_eps_student) if args.judge_eps_student else tuple(args.judge_eps)
-            fit_kw = {"eps": tuple(args.judge_eps), "eps_S": eps_S}
+            fit_kw = {"eps": tuple(args.judge_eps), "eps_S": eps_S, "groups": groups}
             row["tempering_fit"] = bootstrap_tempering(cT, args.n_seeds, cS, args.n_seeds, n_boot=args.n_boot, **fit_kw)
             row["brackets"] = {m: fit_tempering(cT, args.n_seeds, cS, args.n_seeds, model=m, **fit_kw)["beta"]
                                for m in ("binomial", "betabinom")}
+            row["pooled_beta"] = fit_tempering(cT, args.n_seeds, cS, args.n_seeds, eps=fit_kw["eps"], eps_S=eps_S)["beta"]
+            if v.role == "student":  # the student against every CFG-matched teacher: is it just guidance?
+                row["vs_cfg_teacher"] = {
+                    ct.name: fit_tempering(results[ct.name].sum(1), args.n_seeds, cS, args.n_seeds, **fit_kw)
+                    for ct in cfg_teachers}
         summary[v.name] = row
     if args.n_seeds >= 4:  # teacher self-split control: should give beta ~ 1, sigma ~ 0
         summary[teacher.name]["self_split_control"] = self_split_control(results[teacher.name])

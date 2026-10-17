@@ -57,7 +57,7 @@ def parse_list(text: str, n: int | None = None) -> list[str]:
 
 def paraphrase(llm, prompt: str, n: int = 8) -> list[str]:
     raw = llm.chat([{"role": "system", "content": PARAPHRASE_SYS.format(n=n)},
-                    {"role": "user", "content": prompt}], temperature=0.9)
+                    {"role": "user", "content": prompt}], temperature=0.9, max_tokens=60 * n + 64)
     return parse_list(raw, n)
 
 

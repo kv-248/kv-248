@@ -182,3 +182,33 @@ def test_predict_scaling_select_and_sigma():
     p1 = predict_scaling(cT, 16, 1.0, 0.0, 1.0, [1, 8], sigma=1.5)
     gain = lambda p: p["student"]["select"][8] - p["student"]["select"][1]  # noqa: E731
     assert gain(p1) > gain(p0)  # re-addressing (sigma) also favours the wording axis
+
+
+def test_group_offsets_remove_task_confound():
+    from scipy.special import expit, logit
+
+    from dap.metrics import fit_tempering
+
+    rng = np.random.default_rng(9)
+    P = 600
+    groups = rng.integers(0, 3, P)
+    task_shift_T = np.array([-1.5, 0.0, 1.5])[groups]  # tasks differ in difficulty
+    qT = expit(task_shift_T + rng.normal(0, 1.2, P))
+    student_offset = np.array([-1.0, 0.0, 1.0])[groups]  # student offsets aligned with difficulty, beta = 1
+    cT = rng.binomial(16, qT)
+    cS = rng.binomial(16, expit(logit(np.clip(qT, 1e-4, 1 - 1e-4)) + student_offset))
+    pooled = fit_tempering(cT, 16, cS, 16)["beta"]
+    within = fit_tempering(cT, 16, cS, 16, groups=groups)
+    assert pooled > 1.15 and abs(within["beta"] - 1.0) < 0.12, (pooled, within["beta"])
+    assert len(within["group_offsets"]) == 3
+
+
+def test_teacher_mode_counts_ignores_style_offset():
+    from dap.metrics import teacher_mode_counts
+
+    rng = np.random.default_rng(10)
+    modes = np.eye(6)[:3] * 4
+    teacher = np.concatenate([m + rng.normal(0, 0.3, (n, 6)) for m, n in zip(modes, (10, 4, 2))])
+    student = modes[0] + rng.normal(0, 0.3, (8, 6)) + np.array([0, 0, 0, 0, 0, 1.0])  # dominant mode + style shift
+    t, s = teacher_mode_counts(teacher, student, k=3)
+    assert s[np.argmax(t)] == 8

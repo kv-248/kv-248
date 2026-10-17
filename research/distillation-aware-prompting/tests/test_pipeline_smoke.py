@@ -52,10 +52,11 @@ def _run(script, *args, check=True):
 def test_sharpening_script(tiny_config, geneval_file, tmp_path):
     out = _run("sharpening.py", "--family", "tiny", "--config", tiny_config, "--geneval-meta", geneval_file,
                "--n-seeds", "4", "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path), "--save-images",
-               "--n-boot", "5", "--teacher-cfgs", "9")
+               "--n-boot", "3", "--teacher-cfgs", "9")
     summary = json.loads((tmp_path / "summary.json").read_text())
     assert set(summary) == {"tiny-teacher", "tiny-student", "tiny-teacher-cfg9"}
     assert "sharpening_vs_teacher" in summary["tiny-student"]
+    assert set(summary["tiny-student"]["vs_cfg_teacher"]) == {"tiny-teacher-cfg9"}
     assert (tmp_path / "images" / "tiny-student" / "00000" / "samples" / "0003.png").exists()
     assert "tiny-student" in out
 
@@ -81,6 +82,13 @@ def test_search_scaling_script(tiny_config, geneval_file, tmp_path):
     summary = json.loads((tmp_path / "e3" / "summary.json").read_text())["mock"]
     assert set(summary) == {"noise", "prompt", "dape", "teacher"}
     assert "6" in summary["teacher"]  # teacher reported at its native cost (3 steps x CFG)
+    assert summary["prompt"]["2"]["fresh_rate"] is not None
+    _run("search_scaling.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
+         "--geneval-meta", geneval_file, "--budgets", "2", "4", "--methods", "prompt_fresh", "teacher_prompt",
+         "--llm", "echo", "--teacher-cfg", "9", "--fresh-seeds", "2", "--device", "cpu", "--dtype", "float32",
+         "--out", str(tmp_path / "e3f"))
+    sf = json.loads((tmp_path / "e3f" / "summary.json").read_text())["mock"]
+    assert set(sf) == {"prompt_fresh", "teacher_prompt"}
     out_s = _run("search_scaling.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
                  "--geneval-meta", geneval_file, "--budgets", "0.5", "5", "--axis", "seconds", "--max-images", "3",
                  "--methods", "noise", "dape", "teacher", "--device", "cpu", "--dtype", "float32",
