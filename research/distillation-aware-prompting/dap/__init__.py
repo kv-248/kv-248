@@ -4,11 +4,15 @@ from __future__ import annotations
 
 
 def make_judge(spec: str, device: str = "cuda"):
-    """'mock' | 'hf:<model_id>' | 'openai:<model>@<base_url>'"""
+    """'mock' | 'geneval' (detector-based, GenEval intents) | 'hf:<model_id>' | 'openai:<model>@<base_url>'"""
     from .judges import HFVLMJudge, MockJudge, OpenAIVLMJudge
 
     if spec == "mock":
         return MockJudge()
+    if spec == "geneval":
+        from .geneval_judge import GenEvalDetectorJudge
+
+        return GenEvalDetectorJudge(device=device)
     kind, _, rest = spec.partition(":")
     if kind == "hf":
         return HFVLMJudge(rest, device=device)

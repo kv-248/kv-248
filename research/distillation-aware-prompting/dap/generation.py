@@ -108,10 +108,12 @@ class Generator:
         unet.load_state_dict(state)
         return unet.to(torch_dtype)
 
-    def generate(self, prompts: list[str], seeds: list[int], resolution: int | None = None, noise: str = "white"):
+    def generate(self, prompts: list[str], seeds: list[int], resolution: int | None = None, noise: str = "white",
+                 cads: dict | None = None):
         """One image per (prompt, seed) pair. Returns a list of PIL images.
         noise="pink": seed-determined 1/f initial latents (UNet latent pipelines only), a cheap
-        noise-side diversity baseline."""
+        noise-side diversity baseline. noise="cads": condition-annealed diffusion sampling (Sadat et
+        al., ICLR'24) on the text embeddings; `cads` overrides tau1, tau2, s, psi."""
         import torch
 
         assert len(prompts) == len(seeds)
@@ -125,8 +127,13 @@ class Generator:
                 raise NotImplementedError("pink-noise latents are implemented for UNet (SDXL-family) pipelines")
             shape = (self.pipe.unet.config.in_channels, res // self.pipe.vae_scale_factor, res // self.pipe.vae_scale_factor)
             extra["latents"] = torch.stack([pink_noise(shape, int(s)) for s in seeds]).to(self.device, self.pipe.unet.dtype)
+        if noise == "cads":
+            extra.update(self._cads_kwargs(prompts, seeds, **(cads or {})))
+            prompt_arg = {}
+        else:
+            prompt_arg = {"prompt": list(prompts)}
         out = self.pipe(
-            prompt=list(prompts),
+            **prompt_arg,
             generator=gens,
             num_inference_steps=self.spec.steps,
             guidance_scale=self.spec.guidance_scale,
@@ -137,6 +144,54 @@ class Generator:
         ).images
         self.nfe += self.spec.nfe_per_image * len(prompts)
         self.images_generated += len(prompts)
+        return out
+
+    def _cads_kwargs(self, prompts, seeds, tau1: float = 0.6, tau2: float = 0.9, s: float = 0.25, psi: float = 1.0):
+        """CADS for SDXL-family pipelines: pre-noised text embeddings for the first step and a
+        step-end callback that re-noises them with the annealed schedule gamma(t) (t = 1 is pure
+        noise; gamma = 1 below tau1, 0 above tau2). Only the conditional half is perturbed when the
+        pipeline uses CFG. Noise is seeded per image."""
+        import torch
+
+        if not hasattr(self.pipe, "unet") or not hasattr(self.pipe, "text_encoder_2"):
+            raise NotImplementedError("CADS is implemented for SDXL-family pipelines")
+        pipe, cfg = self.pipe, self.spec.cfg
+        pe, npe, pooled, npooled = pipe.encode_prompt(list(prompts), device=self.device, num_images_per_prompt=1,
+                                                      do_classifier_free_guidance=cfg)
+        clean = {"prompt_embeds": pe, "add_text_embeds": pooled}
+        gens = [torch.Generator().manual_seed(int(sd) + 777) for sd in seeds]
+        noises = {k: torch.stack([torch.randn(v.shape[1:], generator=g) for g in gens]).to(v.device, v.dtype)
+                  for k, v in clean.items()}
+
+        def gamma(t):
+            return 1.0 if t <= tau1 else 0.0 if t >= tau2 else (tau2 - t) / (tau2 - tau1)
+
+        def corrupt(y, n, t):
+            g = gamma(t)
+            y_hat = (g ** 0.5) * y + s * ((1 - g) ** 0.5) * n
+            if g < 1.0:
+                dims = tuple(range(1, y.ndim))
+                rescaled = (y_hat - y_hat.mean(dims, keepdim=True)) / (y_hat.std(dims, keepdim=True) + 1e-6)
+                rescaled = rescaled * y.std(dims, keepdim=True) + y.mean(dims, keepdim=True)
+                y_hat = psi * rescaled + (1 - psi) * y_hat
+            return y_hat
+
+        T = pipe.scheduler.config.num_train_timesteps
+
+        def callback(p, step, timestep, kw):
+            ts = p.scheduler.timesteps
+            if step + 1 < len(ts):
+                t_next = float(ts[step + 1]) / T
+                for key in ("prompt_embeds", "add_text_embeds"):
+                    new = corrupt(clean[key], noises[key], t_next)
+                    kw[key] = torch.cat([kw[key][: len(new)], new]) if cfg else new
+            return kw
+
+        first = corrupt(pe, noises["prompt_embeds"], 1.0), corrupt(pooled, noises["add_text_embeds"], 1.0)
+        out = {"prompt_embeds": first[0], "pooled_prompt_embeds": first[1], "callback_on_step_end": callback,
+               "callback_on_step_end_tensor_inputs": ["prompt_embeds", "add_text_embeds"]}
+        if cfg:
+            out.update({"negative_prompt_embeds": npe, "negative_pooled_prompt_embeds": npooled})
         return out
 
     def generate_batched(self, prompts: list[str], seeds: list[int], batch_size: int = 8, **kw):
@@ -159,3 +214,32 @@ def pink_noise(shape: tuple[int, int, int], seed: int, alpha: float = 1.0):
     x = torch.fft.irfft2(torch.fft.rfft2(white) * scale, s=(h, w))
     x = (x - x.mean(dim=(1, 2), keepdim=True)) / x.std(dim=(1, 2), keepdim=True)
     return x
+
+
+def hybrid_teacher_first(teacher: "Generator", student: "Generator", prompts: list[str], seeds: list[int],
+                         switch: float = 0.25):
+    """Hybrid sampling (Gandikota & Bau): the TEACHER denoises the high-noise segment (the first
+    `switch` fraction of its schedule, where distilled students commit to layout), then the STUDENT
+    finishes from the teacher's latent (SDXL-family pipelines via denoising_end / denoising_start).
+    Cost: switch * teacher NFE + the student's remaining steps; both are added to the NFE counters."""
+    import math
+
+    import torch
+    from diffusers import StableDiffusionXLImg2ImgPipeline
+
+    for g in (teacher, student):
+        if g.pipe is None:
+            g.load()
+    res = student.spec.resolution
+    gens = [torch.Generator(device="cpu").manual_seed(int(s)) for s in seeds]
+    latents = teacher.pipe(prompt=list(prompts), generator=gens, num_inference_steps=teacher.spec.steps,
+                           guidance_scale=teacher.spec.guidance_scale, height=res, width=res,
+                           denoising_end=switch, output_type="latent").images
+    teacher.nfe += math.ceil(teacher.spec.steps * switch) * (2 if teacher.spec.cfg else 1) * len(prompts)
+    i2i = StableDiffusionXLImg2ImgPipeline.from_pipe(student.pipe)
+    i2i.set_progress_bar_config(disable=True)
+    kw = {k: v for k, v in student.spec.call_kwargs.items() if k != "timesteps"}  # custom timesteps don't compose
+    out = i2i(prompt=list(prompts), image=latents, generator=gens, num_inference_steps=student.spec.steps,
+              guidance_scale=student.spec.guidance_scale, denoising_start=switch, **kw).images
+    student.nfe += math.ceil(student.spec.steps * (1 - switch)) * (2 if student.spec.cfg else 1) * len(prompts)
+    return out

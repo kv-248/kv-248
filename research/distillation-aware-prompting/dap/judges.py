@@ -34,6 +34,8 @@ def score_intent(judge: Judge, images: Sequence, intent: Intent, threshold: floa
     Returns per image: per-question probabilities, soft score (mean P(yes)),
     strict success (all required questions above threshold) and failed questions.
     """
+    if hasattr(judge, "score_geneval") and intent.meta.get("include"):
+        return judge.score_geneval(images, intent)
     q = intent.questions
     flat_imgs = [im for im in images for _ in q]
     flat_qs = [qq for _ in images for qq in q]

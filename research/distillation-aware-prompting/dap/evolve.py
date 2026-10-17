@@ -42,6 +42,7 @@ class Candidate:
     precision: float = 0.0  # max cosine similarity to the teacher reference set
     ref_weight: float = 0.0
     seconds: float = 0.0  # cumulative wall-clock of the search (generation + judge + LLM) when evaluated
+    confirmed: bool = False  # passed the checklist on its seeds AND on the confirmation seeds
 
     @property
     def success_rate(self) -> float:
@@ -80,7 +81,11 @@ class EvolveConfig:
     ref_weight: float = 0.0  # weight of teacher-reference precision in the fitness
     init_prompts: tuple[str, ...] = ()  # e.g. a Reword-K set, evaluated right after the original
     parent_selection: str = "pareto"  # "pareto": non-dominated over checklist items (GEPA-style); "top": by fitness
-    target_successes: int = 1  # early stop once this many candidates satisfy the checklist
+    target_successes: int = 1  # early stop once this many candidates are confirmed successes
+    confirm_seeds: tuple[int, ...] = ()  # re-render a passing candidate on these seeds before counting it
+    confirm_threshold: float = 2 / 3  # success rate over all its seeds needed to count as confirmed
+    prescored: tuple = ()  # (prompt, scores, images) already rendered on cfg.seeds, e.g. a Reword-K set
+    exclude: tuple[str, ...] = ()  # wordings known to fail (e.g. failed fresh-seed verification)
 
 
 @dataclass
@@ -92,7 +97,7 @@ class EvolveResult:
     llm_usage: dict
 
     def successes(self) -> list[Candidate]:
-        return [c for c in self.history if c.success_rate == 1.0]
+        return [c for c in self.history if c.confirmed]
 
 
 def _unit(x):
@@ -119,10 +124,21 @@ def evolve(intent: Intent, generator, judge, llm=None, cfg: EvolveConfig | None 
     def budget_left() -> bool:
         return generator.nfe - start + cost <= cfg.budget_nfe
 
-    def evaluate(prompt: str, op: str, parent: int | None) -> Candidate:
+    def evaluate(prompt: str, op: str, parent: int | None, prescored=None) -> Candidate:
         seeds = list(cfg.seeds)
-        images = generator.generate([prompt] * len(seeds), seeds)
-        cand = Candidate(prompt, op, parent, seeds, score_intent(judge, images, intent))
+        if prescored is not None:  # already rendered and judged by the caller: no new cost
+            scores, images = prescored
+        else:
+            images = generator.generate([prompt] * len(seeds), seeds)
+            scores = score_intent(judge, images, intent)
+        cand = Candidate(prompt, op, parent, seeds, list(scores))
+        passing = all(sc["success"] for sc in scores) and prompt not in cfg.exclude
+        if passing and cfg.confirm_seeds:
+            extra = generator.generate([prompt] * len(cfg.confirm_seeds), list(cfg.confirm_seeds))
+            cand.scores += score_intent(judge, extra, intent)
+            cand.seeds += list(cfg.confirm_seeds)
+            passing = cand.success_rate >= cfg.confirm_threshold
+        cand.confirmed = passing
         if embed_fn is not None:
             cand.emb = _unit(_unit(embed_fn(images)).mean(0))
             if ref is not None:
@@ -136,14 +152,18 @@ def evolve(intent: Intent, generator, judge, llm=None, cfg: EvolveConfig | None 
         return cand
 
     def result(solved: bool) -> EvolveResult:
-        best = max(history, key=lambda c: c.fitness)
+        eligible = [c for c in history if c.prompt not in cfg.exclude] or history
+        best = max(eligible, key=lambda c: (c.confirmed, c.fitness))
         usage = llm.usage() if llm is not None and hasattr(llm, "usage") else {}
         return EvolveResult(best, history, generator.nfe - start, solved, usage)
 
     def done() -> bool:
-        return cfg.early_stop and sum(c.success_rate == 1.0 for c in history) >= cfg.target_successes
+        return cfg.early_stop and sum(c.confirmed for c in history) >= cfg.target_successes
 
     evaluate(intent.prompt, "original", None)
+    for prompt, scores, images in cfg.prescored:
+        if prompt not in seen:
+            evaluate(prompt, "init", 0, prescored=(scores, images))
     for prompt in cfg.init_prompts:
         if done() or not budget_left():
             break
@@ -177,7 +197,7 @@ def evolve(intent: Intent, generator, judge, llm=None, cfg: EvolveConfig | None 
             evaluate(prompt, op, pi)
             if done():
                 return result(True)
-    return result(max(c.success_rate for c in history) == 1.0)
+    return result(any(c.confirmed for c in history))
 
 
 def diverse_subset(cands: list[Candidate], embeddings, k: int) -> list[int]:

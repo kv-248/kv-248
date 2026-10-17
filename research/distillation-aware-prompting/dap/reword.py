@@ -59,10 +59,14 @@ def reword_k(llm, prompt: str, k: int = 4, temperature: float = 0.8, joint: bool
     if not joint:
         outs = [reword_k(llm, prompt, 1, temperature, True, **switches)[0] for _ in range(k)]
         return outs
-    raw = llm.chat([{"role": "system", "content": reword_system(k, **switches)},
-                    {"role": "user", "content": prompt}], temperature=temperature, max_tokens=80 * k)
-    outs = parse_list(raw, k)
-    return (outs + [prompt] * k)[:k]
+    outs: list[str] = []
+    for _ in range(2):  # retry once on a short/unparseable list; never pad with the original prompt
+        raw = llm.chat([{"role": "system", "content": reword_system(k, **switches)},
+                        {"role": "user", "content": prompt}], temperature=temperature, max_tokens=80 * k)
+        outs += [o for o in parse_list(raw, k) if o != prompt and o not in outs]
+        if len(outs) >= k:
+            break
+    return outs[:k] or [prompt]
 
 
 def tag_k(prompt: str, k: int, seed: int = 0) -> list[str]:

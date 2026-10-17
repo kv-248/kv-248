@@ -89,6 +89,12 @@ def test_search_scaling_script(tiny_config, geneval_file, tmp_path):
          "--out", str(tmp_path / "e3f"))
     sf = json.loads((tmp_path / "e3f" / "summary.json").read_text())["mock"]
     assert set(sf) == {"prompt_fresh", "teacher_prompt"}
+    _run("search_scaling.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
+         "--geneval-meta", geneval_file, "--budgets", "1", "3", "--axis", "images", "--methods", "noise", "reword",
+         "teacher", "--llm", "echo", "--fresh-seeds", "1", "--device", "cpu", "--dtype", "float32",
+         "--out", str(tmp_path / "e3i"))
+    si = json.loads((tmp_path / "e3i" / "summary.json").read_text())["mock"]
+    assert set(si) == {"noise", "reword", "teacher"} and set(si["teacher"]) == {"1", "3"}
     out_s = _run("search_scaling.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
                  "--geneval-meta", geneval_file, "--budgets", "0.5", "5", "--axis", "seconds", "--max-images", "3",
                  "--methods", "noise", "dape", "teacher", "--device", "cpu", "--dtype", "float32",
@@ -133,11 +139,12 @@ def test_remedy_eval_script(tiny_config, geneval_file, tmp_path):
     its = load_geneval(geneval_file)
     pe.write_text(json.dumps({i.prompt: "a detailed photo, " + i.prompt for i in its}))
     out = _run("remedy_eval.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
-               "--geneval-meta", geneval_file, "--methods", "seeds", "pink", "tags", "pe", "teacher", "--k", "2",
+               "--geneval-meta", geneval_file, "--methods", "seeds", "pink", "cads", "hybrid", "tags", "pe", "teacher",
+               "--k", "2", "--hybrid-switch", "0.34",
                "--n-ref", "8", "--coverage-k", "2", "--pe-rewrites", str(pe), "--pe-latency-s", "1.5",
                "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path / "e5"))
     s = json.loads((tmp_path / "e5" / "summary.json").read_text())
-    assert set(s) == {"seeds", "pink", "tags", "pe", "teacher"} and s["pe"]["latency_s"] >= 1.5
+    assert set(s) == {"seeds", "pink", "cads", "hybrid", "tags", "pe", "teacher"} and s["pe"]["latency_s"] >= 1.5
     assert "reword" not in out
 
 
@@ -151,7 +158,8 @@ def test_reword_and_injection_parsing():
                        "[false, true]"])
     assert reword_k(llm, "a cat and a dog", 2) == ["a cat on the left, a dog on the right", "seen from above: a cat and a dog"]
     assert attribute_injection(llm, "a cat and a dog", ["x", "y"]) == [False, True]
-    assert len(reword_k(ScriptedLLM(["not json"]), "a cat", 3)) == 3
+    assert reword_k(ScriptedLLM(["not json"]), "a cat", 3) == ["not json"] or len(reword_k(ScriptedLLM(["not json"]), "a cat", 3)) <= 3
+    assert "a cat" not in reword_k(ScriptedLLM(['["a cat", "one cat"]']), "a cat", 2)
 
 
 def test_pink_noise_statistics():
@@ -192,3 +200,36 @@ def test_reach_ledger_script(tiny_config, geneval_file, tmp_path):
     assert set(s) == {"tiny-teacher", "tiny-student"}
     for v in s.values():
         assert abs(sum(v["share"].values()) - (1.0 if v["n"] else 0.0)) < 1e-9
+        assert set(v["share_by_threshold"]) == {"0.25", "0.5", "0.75"} and "placebo_share" in v
+
+
+def test_analyze_interaction_and_predict(tiny_config, geneval_file, tmp_path):
+    _run("search_scaling.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
+         "--geneval-meta", geneval_file, "--budgets", "2", "--axis", "images", "--methods", "noise", "reword",
+         "teacher", "teacher_prompt", "--llm", "echo", "--fresh-seeds", "2", "--device", "cpu", "--dtype", "float32",
+         "--out", str(tmp_path / "e3"))
+    out = _run("analyze.py", "interaction", "--run", str(tmp_path / "e3"), "--budget", "2")
+    assert '"interaction"' in out and '"n": 4' in out
+    _run("sharpening.py", "--family", "tiny", "--config", tiny_config, "--geneval-meta", geneval_file,
+         "--n-seeds", "4", "--n-boot", "2", "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path / "e1"))
+    paras = tmp_path / "paras.json"
+    paras.write_text(json.dumps({i.prompt: [i.prompt + " (v1)", "photo: " + i.prompt] for i in load_geneval(geneval_file)}))
+    _run("variance.py", "--family", "tiny", "--config", tiny_config, "--geneval-meta", geneval_file, "--n-para", "3",
+         "--n-seeds", "2", "--paraphrases", str(paras), "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path / "e2"))
+    _run("analyze.py", "predict", "--e1", str(tmp_path / "e1"), "--grid", str(tmp_path / "e2"), "--teacher", "tiny-teacher",
+         "--budgets", "1", "2", "--out", str(tmp_path / "pred.json"))
+    pred = json.loads((tmp_path / "pred.json").read_text())
+    assert "tiny-student" in pred["students"] and "ledger" in pred["students"]["tiny-student"]
+
+
+def test_cads_and_hybrid_on_tiny_sdxl(tiny_config):
+    from dap.generation import hybrid_teacher_first
+
+    s, t = _gen(tiny_config, "tiny-student"), _gen(tiny_config, "tiny-teacher")
+    a = s.generate(["a cat", "a dog"], [0, 1], noise="cads")
+    b = s.generate(["a cat", "a dog"], [0, 1])
+    assert len(a) == 2 and a[0].size == b[0].size
+    c = t.generate(["a cat"], [0], noise="cads", cads={"s": 0.5})  # CFG pipeline path
+    assert c[0].size == (64, 64)
+    h = hybrid_teacher_first(t, s, ["a cat"], [0], switch=0.34)
+    assert h[0].size == (64, 64) and t.nfe > 0

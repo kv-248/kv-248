@@ -447,3 +447,85 @@ def paired_interaction_ci(gain_S: np.ndarray, gain_T: np.ndarray, n_boot: int = 
     boots = [d[rng.integers(0, len(d), len(d))].mean() for _ in range(n_boot)]
     lo, hi = np.percentile(boots, [2.5, 97.5])
     return {"interaction": float(d.mean()), "ci": [float(lo), float(hi)], "n": int(len(d))}
+
+
+def fit_tempering_grid(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int, n_a: int = 10, n_e: int = 8,
+                       eps: tuple[float, float] = (0.0, 0.0), eps_S: tuple[float, float] | None = None) -> dict:
+    """Two-level fit on a wording x seed grid (counts [I intents, J wordings]):
+
+        logit q_S(i, j) = beta * logit q_T(i, j) + b + sigma_I * a_i + sigma_W * e_ij
+
+    sigma_I: intent-level re-addressing (shared by all wordings of an intent); sigma_W: wording-level
+    re-addressing within an intent. P2 (wording gains) and P4 (transfer) depend on sigma_W, which the
+    single-level fit on original wordings cannot see. Teacher cell rates are latent (EIV), a_i and
+    e_ij are integrated by Gauss-Hermite quadrature."""
+    from scipy.optimize import minimize
+    from scipy.special import expit, gammaln, logsumexp
+
+    cT, cS = np.asarray(cT), np.asarray(cS)
+    I, J = cT.shape
+    s0, s1 = eps_S if eps_S is not None else eps
+    post, prior = teacher_posterior(cT.reshape(-1), nT, eps)
+    keep = post.max(0) > 1e-8
+    U = _U[keep]
+    log_post = np.log(post[:, keep] + 1e-300).reshape(I, J, -1)
+    xa, wa = np.polynomial.hermite_e.hermegauss(n_a)
+    xe, we = np.polynomial.hermite_e.hermegauss(n_e)
+    lwa, lwe = np.log(wa / wa.sum()), np.log(we / we.sum())
+    c = cS[:, :, None, None].astype(float)
+    lconst = gammaln(nS + 1) - gammaln(c + 1) - gammaln(nS - c + 1)
+
+    def nll(theta):
+        b1, b2, ls_i, ls_w = theta
+        per_a = []
+        for x, lw in zip(xa, lwa):
+            eta = b1 * U[:, None] + b2 + np.exp(ls_i) * x + np.exp(ls_w) * xe[None, :]  # [U, E]
+            m = np.clip(s0 + (1 - s0 - s1) * expit(eta), 1e-12, 1 - 1e-12)
+            ll = lconst + c * np.log(m) + (nS - c) * np.log1p(-m)  # [I, J, U, E]
+            cell = logsumexp(log_post + logsumexp(ll + lwe, axis=3), axis=2)  # [I, J]
+            per_a.append(cell.sum(1) + lw)
+        return -np.sum(logsumexp(np.stack(per_a, 1), axis=1))
+
+    res = minimize(nll, x0=[1.0, 0.0, np.log(0.5), np.log(0.5)], method="L-BFGS-B")
+    return {"beta": float(res.x[0]), "b": float(res.x[1]), "sigma_intent": float(np.exp(res.x[2])),
+            "sigma_wording": float(np.exp(res.x[3])), "nll": float(res.fun), "prior": prior}
+
+
+def predict_ledger(cT, nT: int, beta: float, b: float, sigma_intent: float, sigma_wording: float,
+                   mu_w: float, s_w: float, k: int = 8, n_seeds: int = 16, thresholds=(0.25, 0.5, 0.75),
+                   n_mc: int = 64, seed: int = 0) -> dict:
+    """Pre-registrable ledger shares (original / reword / reseed_only / lost) for teacher and student
+    from the law, the teacher's original-wording counts and the teacher's wording statistics
+    (mu_w, s_w: mean / s.d. of paraphrase effects in teacher logit space). Restricted to
+    teacher-reachable intents as in scripts/reach_ledger.py; 'reword' uses a 1-seed selector over
+    k wordings and counts the chosen wording's TRUE rate (evolution is a stronger search, so its
+    rung is bounded above by k -> larger)."""
+    from scipy.special import expit
+
+    rng = np.random.default_rng(seed)
+    post, _ = teacher_posterior(cT, nT)
+    out = {}
+    for name, (bb, b0, si, sw) in {"teacher": (1.0, 0.0, 0.0, 0.0),
+                                    "student": (beta, b, sigma_intent, sigma_wording)}.items():
+        shares = {t: {"original": 0.0, "reword": 0.0, "reseed_only": 0.0, "lost": 0.0} for t in thresholds}
+        total = 0.0
+        for row in post:
+            u = rng.choice(_U, size=n_mc, p=row)
+            reach_T = 1 - (1 - expit(u)) ** n_seeds  # teacher reachability, used as a weight
+            d = rng.normal(mu_w, s_w, (n_mc, k))
+            d[:, 0] = 0.0
+            q = expit(bb * (u[:, None] + d) + b0 + si * rng.normal(size=(n_mc, 1)) + sw * rng.normal(size=(n_mc, k)))
+            verdict = rng.uniform(size=q.shape) < q
+            q_sel = q[np.arange(n_mc), np.argmax(verdict + 1e-3 * (np.arange(k) == 0), axis=1)]
+            lucky = 1 - (1 - q[:, 0]) ** n_seeds
+            for t in thresholds:
+                orig = q[:, 0] >= t
+                rew = (~orig) & (q_sel >= t)
+                rest = ~(orig | rew)
+                shares[t]["original"] += float(np.sum(reach_T * orig))
+                shares[t]["reword"] += float(np.sum(reach_T * rew))
+                shares[t]["reseed_only"] += float(np.sum(reach_T * rest * lucky))
+                shares[t]["lost"] += float(np.sum(reach_T * rest * (1 - lucky)))
+            total += float(np.sum(reach_T))
+        out[name] = {t: {k_: v / total for k_, v in sh.items()} for t, sh in shares.items()}
+    return out

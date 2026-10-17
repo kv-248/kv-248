@@ -4,6 +4,7 @@ Anytime curves (quality vs cost) on GenEval intents for:
   noise          : student, original prompt, best-of-N over seeds
   prompt         : student, best-of-N over paraphrases, one SHARED seed (isolates the wording axis)
   prompt_fresh   : student, best-of-N over paraphrases, a fresh seed each (wording + seed)
+  reword         : student, best-of-N over Reword-K wordings (jointly diverse, in chunks of 8), fresh seeds
   dape           : student, distillation-aware prompt evolution (one seed per candidate)
   teacher        : teacher, original prompt, best-of-N over seeds
   teacher_prompt : teacher, best-of-N over paraphrases, a fresh seed each
@@ -41,37 +42,39 @@ from dap.evolve import EvolveConfig, evolve  # noqa: E402
 from dap.generation import CONFIG_PATH, Generator, get_variant, teacher_of  # noqa: E402
 from dap.judges import score_intent  # noqa: E402
 from dap.questions import load_geneval  # noqa: E402
+from dap.reword import reword_k  # noqa: E402
 from dap.rewrite import paraphrase  # noqa: E402
 
 
 def candidates_bon(gen, intent, judge, prompts, seeds, t_offset: float = 0.0):
-    """Evaluate (prompt, seed) pairs one by one; return [((cum_nfe, cum_sec), key, image, prompt)].
+    """Evaluate (prompt, seed) pairs one by one; return [((cum_nfe, cum_sec, n_images), key, image, prompt)].
     `t_offset` adds up-front cost (e.g. generating the paraphrases)."""
     out, start, t0 = [], gen.nfe, time.perf_counter()
-    for p, s in zip(prompts, seeds):
+    for n, (p, s) in enumerate(zip(prompts, seeds), 1):
         im = gen.generate([p], [s])[0]
         sc = score_intent(judge, [im], intent)[0]
-        out.append(((gen.nfe - start, t_offset + time.perf_counter() - t0), (sc["success"], sc["soft"]), im, p))
+        out.append(((gen.nfe - start, t_offset + time.perf_counter() - t0, n), (sc["success"], sc["soft"]), im, p))
     return out
 
 
-def candidates_wordings(gen, intent, judge, n, seed, fresh_seeds, llm, cached, chunk: int = 8):
-    """Original wording + paraphrases, generated lazily in chunks so the LLM cost is charged when it
-    is incurred; seed shared (pure wording axis) or fresh per wording."""
+def candidates_wordings(gen, intent, judge, n, seed, fresh_seeds, llm, cached, chunk: int = 8,
+                        source: str = "paraphrase"):
+    """Original wording + paraphrases (or Reword-K sets), generated lazily in chunks so the LLM cost
+    is charged when it is incurred; seed shared (pure wording axis) or fresh per wording."""
     out, start, t0 = [], gen.nfe, time.perf_counter()
     pool = list(cached)
     wordings = [intent.prompt]
     for j in range(n):
         if j >= len(wordings):
             if not pool and llm is not None:
-                pool = paraphrase(llm, intent.prompt, n=chunk)
+                pool = reword_k(llm, intent.prompt, chunk) if source == "reword" else paraphrase(llm, intent.prompt, n=chunk)
             if not pool:
                 break
             wordings.append(pool.pop(0))
         s = seed + j if fresh_seeds else seed
         im = gen.generate([wordings[j]], [s])[0]
         sc = score_intent(judge, [im], intent)[0]
-        out.append(((gen.nfe - start, time.perf_counter() - t0), (sc["success"], sc["soft"]), im, wordings[j]))
+        out.append(((gen.nfe - start, time.perf_counter() - t0, j + 1), (sc["success"], sc["soft"]), im, wordings[j]))
     return out
 
 
@@ -79,7 +82,7 @@ def candidates_dape(gen, intent, judge, llm, budget, seed):
     start = gen.nfe
     res = evolve(intent, gen, judge, llm, EvolveConfig(budget_nfe=budget, seeds=(seed,), keep_images=True))
     per = gen.spec.nfe_per_image
-    out = [(((k + 1) * per, c.seconds), (c.scores[0]["success"], c.scores[0]["soft"]), c.images[0], c.prompt)
+    out = [(((k + 1) * per, c.seconds, k + 1), (c.scores[0]["success"], c.scores[0]["soft"]), c.images[0], c.prompt)
            for k, c in enumerate(res.history)]
     assert out[-1][0][0] == gen.nfe - start
     return out, res.llm_usage
@@ -87,7 +90,7 @@ def candidates_dape(gen, intent, judge, llm, budget, seed):
 
 def anytime(cands, budgets, axis: int = 0):
     """budget -> index of the search-judge best candidate affordable within that budget
-    (axis 0: NFE, axis 1: wall-clock seconds)."""
+    (axis 0: NFE, axis 1: wall-clock seconds, axis 2: number of images)."""
     sel = {}
     for b in budgets:
         affordable = [i for i, c in enumerate(cands) if c[0][axis] <= b]
@@ -102,7 +105,8 @@ def main():
     ap.add_argument("--student", required=True)
     ap.add_argument("--config", default=str(CONFIG_PATH))
     ap.add_argument("--budgets", nargs="+", type=float, required=True, help="budgets on the chosen axis")
-    ap.add_argument("--axis", choices=["nfe", "seconds"], default="nfe")
+    ap.add_argument("--axis", choices=["nfe", "seconds", "images"], default="nfe",
+                    help="images = equal sample count (the teacher gets as many images as the student)")
     ap.add_argument("--max-images", type=int, default=64,
                     help="seconds axis: student images per method (teacher gets the same NFE envelope)")
     ap.add_argument("--methods", nargs="+", default=["noise", "prompt", "dape", "teacher"])
@@ -139,10 +143,14 @@ def main():
         teacher = Generator(tspec, args.device, args.dtype).load()
         if args.axis == "nfe":  # always report the teacher at its native single-sample cost as well
             args.budgets = sorted(set(args.budgets) | {teacher.spec.nfe_per_image})
-    axis = 0 if args.axis == "nfe" else 1
+    axis = {"nfe": 0, "seconds": 1, "images": 2}[args.axis]
     if args.axis == "nfe":
         args.budgets = [int(b) for b in args.budgets]
         bmax = max(args.budgets)
+    elif args.axis == "images":
+        args.budgets = [int(b) for b in args.budgets]
+        args.max_images = max(args.budgets)
+        bmax = args.max_images * student.spec.nfe_per_image
     else:
         bmax = args.max_images * student.spec.nfe_per_image  # NFE envelope; the clock decides the curve
 
@@ -154,14 +162,16 @@ def main():
             seeds = list(range(args.seed, args.seed + n_s))
             per_method["noise"] = (candidates_bon(student, intent, search_judge, [intent.prompt] * n_s, seeds), {})
         cached = [] if llm is not None else paras.get(intent.prompt, [])  # online paraphrasing is costed
-        for method, fresh in (("prompt", False), ("prompt_fresh", True)):
+        for method, fresh, source in (("prompt", False, "paraphrase"), ("prompt_fresh", True, "paraphrase"),
+                                      ("reword", True, "reword")):
             if method in args.methods:
                 per_method[method] = (candidates_wordings(student, intent, search_judge, n_s, args.seed, fresh,
-                                                          llm, cached), {})
+                                                          llm, [] if source == "reword" else cached, source=source), {})
         if "dape" in args.methods:
             per_method["dape"] = candidates_dape(student, intent, search_judge, llm, bmax, args.seed)
         if teacher is not None:
-            n_t = max(1, bmax // teacher.spec.nfe_per_image)
+            # equal sample count on the images axis; otherwise the teacher gets the same compute envelope
+            n_t = args.max_images if args.axis == "images" else max(1, bmax // teacher.spec.nfe_per_image)
             if "teacher" in args.methods:
                 seeds = list(range(args.seed, args.seed + n_t))
                 per_method["teacher"] = (candidates_bon(teacher, intent, search_judge, [intent.prompt] * n_t, seeds), {})

@@ -212,3 +212,80 @@ def test_teacher_mode_counts_ignores_style_offset():
     student = modes[0] + rng.normal(0, 0.3, (8, 6)) + np.array([0, 0, 0, 0, 0, 1.0])  # dominant mode + style shift
     t, s = teacher_mode_counts(teacher, student, k=3)
     assert s[np.argmax(t)] == 8
+
+
+def test_evolve_prescored_exclude_and_confirm():
+    """Regression for the ledger bug: evolution must not return a wording that already failed
+    verification, and must confirm a winner on extra seeds before stopping."""
+    from PIL import Image
+
+    from dap.evolve import EvolveConfig, evolve
+    from dap.questions import Intent
+
+    class Gen:  # deterministic fake generator: image intensity encodes (prompt, seed)
+        def __init__(self):
+            from dap.generation import VariantSpec
+
+            self.spec = VariantSpec("fake", "f", "student", "x", 1, 0.0, False, 8, objective="test")
+            self.nfe = 0
+
+        def generate(self, prompts, seeds):
+            self.nfe += len(prompts)
+            return [Image.new("RGB", (8, 8), (hash((p, s)) % 256, 0, 0)) for p, s in zip(prompts, seeds)]
+
+    class Judge:  # "good" wordings always pass; "flaky" passes only on seed 0
+        name = "fake"
+
+        def yes_prob(self, images, questions):
+            return np.array([1.0 if im.info.get("ok") else 0.0 for im in images])
+
+    def score(prompt, seed):
+        ok = "good" in prompt or ("flaky" in prompt and seed == 0)
+        return {"probs": [float(ok)], "soft": float(ok), "success": ok, "failed": [] if ok else ["q"]}
+
+    import dap.evolve as E
+
+    orig = E.score_intent
+    E.score_intent = lambda judge, images, intent: [score(*im.info["key"]) for im in images]
+    try:
+        gen = Gen()
+        base_generate = gen.generate
+
+        def generate(prompts, seeds):
+            ims = base_generate(prompts, seeds)
+            for im, p, s in zip(ims, prompts, seeds):
+                im.info["key"] = (p, s)
+            return ims
+
+        gen.generate = generate
+        intent = Intent("a cat", ["Is there a cat in the image?"])
+        flaky = [score("flaky wording", 0)]
+        cfg = EvolveConfig(budget_nfe=6, prescored=(("flaky wording", flaky, generate(["flaky wording"], [0])),),
+                           exclude=("flaky wording",), confirm_seeds=(1, 2))
+        llm = type("L", (), {"chat": lambda self, m, **k: '["good wording", "flaky two"]', "usage": lambda self: {}})()
+        res = evolve(intent, gen, None, llm, cfg)
+        assert res.best.prompt == "good wording" and res.best.confirmed
+        assert not any(c.confirmed for c in res.history if "flaky" in c.prompt)
+    finally:
+        E.score_intent = orig
+
+
+def test_two_level_fit_and_ledger_prediction():
+    from scipy.special import expit, logit
+
+    from dap.metrics import fit_tempering_grid, predict_ledger
+
+    rng = np.random.default_rng(12)
+    I, J, n = 150, 6, 12
+    u = logit(np.clip(rng.beta(0.6, 0.5, I), 1e-3, 1 - 1e-3))[:, None] + rng.normal(0, 0.8, (I, J))
+    cT = rng.binomial(n, expit(u))
+    lin = 1.3 * u + 0.6 * rng.normal(size=(I, 1)) + 1.0 * rng.normal(size=(I, J))
+    cS = rng.binomial(n, expit(lin))
+    f = fit_tempering_grid(cT, n, cS, n, n_a=6, n_e=6)
+    assert abs(f["beta"] - 1.3) < 0.3 and abs(f["sigma_wording"] - 1.0) < 0.4, f
+    pred = predict_ledger(cT[:, 0], n, beta=2.0, b=0.0, sigma_intent=0.0, sigma_wording=0.0, mu_w=0.0, s_w=1.0,
+                          n_mc=32)
+    for who in ("teacher", "student"):
+        assert abs(sum(pred[who][0.5].values()) - 1) < 1e-6
+    # tempering moves lucky-only mass to 'lost' at the 0.5 threshold (MF2): student lost > teacher lost
+    assert pred["student"][0.5]["lost"] > pred["teacher"][0.5]["lost"]

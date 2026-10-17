@@ -6,6 +6,8 @@ them: LLM calls, generation, and the search judge only for methods that use one.
   seeds_eq       : equal-time seeds: as many extra seeds as Reword-K's LLM time buys, then K picked
                    by the search judge (needs --search-judge; runs after `reword`)
   pink           : original prompt, K seeds, pink-noise initial latents      (noise side, ~free)
+  cads           : original prompt, K seeds, CADS condition annealing         (noise side, ~free)
+  hybrid         : teacher denoises the first `--hybrid-switch` of the schedule, student finishes
   tags           : original prompt + K random composition tags                (no-LLM control)
   pe             : teacher-built prompt enhancer output (--pe-rewrites; add its cost via --pe-latency-s)
   expand         : K generic diverse LLM expansions (Prompt-Expansion-style control)
@@ -44,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from dap import make_judge, make_llm  # noqa: E402
 from dap.embed import ImageEmbedder, pixel_embed  # noqa: E402
 from dap.evolve import EvolveConfig, evolve, select_population  # noqa: E402
-from dap.generation import CONFIG_PATH, Generator, get_variant, teacher_of  # noqa: E402
+from dap.generation import CONFIG_PATH, Generator, get_variant, hybrid_teacher_first, teacher_of  # noqa: E402
 from dap.judges import score_intent  # noqa: E402
 from dap.metrics import knn_coverage, mean_pairwise_distance, teacher_coverage, vendi_score  # noqa: E402
 from dap.questions import load_geneval  # noqa: E402
@@ -79,6 +81,7 @@ def main():
     ap.add_argument("--search-judge", help="judge for evolve / seeds_eq selection (never an evaluation judge)")
     ap.add_argument("--evolve-images", type=int, default=16, help="evolution budget in student images")
     ap.add_argument("--embedder", default="pixel")
+    ap.add_argument("--hybrid-switch", type=float, default=0.25)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--dtype", default="bfloat16")
@@ -132,6 +135,9 @@ def main():
                                    target_successes=k)
                 pop = select_population(evolve(intent, student, search_judge, llm, cfg, embed_fn=embed), k)
                 prompts, imgs = [c.prompt for c in pop], [c.images[0] for c in pop]
+            elif method == "hybrid":
+                prompts = [intent.prompt] * k
+                imgs = hybrid_teacher_first(teacher, student, prompts, seeds, switch=args.hybrid_switch)
             elif method == "seeds_eq":
                 n_extra = int(t_llm_reword / t_img) if t_img else 0
                 pool_seeds = list(range(args.seed, args.seed + k + n_extra))
@@ -140,7 +146,7 @@ def main():
                 order = sorted(range(len(pool)), key=lambda i: (sc[i]["success"], sc[i]["soft"]), reverse=True)[:k]
                 prompts, imgs = [intent.prompt] * k, [pool[i] for i in order]
             else:
-                if method in ("seeds", "pink", "teacher"):
+                if method in ("seeds", "pink", "cads", "teacher"):
                     prompts = [intent.prompt] * k
                 elif method == "tags":
                     prompts = tag_k(intent.prompt, k, seed=idx)
@@ -156,7 +162,7 @@ def main():
                     raise ValueError(method)
                 gen = teacher if method == "teacher" else student
                 t_gen = time.perf_counter()
-                imgs = gen.generate(prompts, seeds, noise="pink" if method == "pink" else "white")
+                imgs = gen.generate(prompts, seeds, noise=method if method in ("pink", "cads") else "white")
                 if method == "seeds":
                     t_img = (time.perf_counter() - t_gen) / k
             latency = time.perf_counter() - t0 + extra_latency
