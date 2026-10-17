@@ -18,6 +18,8 @@ https://code.claude.com/docs/en/cloud-environments#network-access).
 | 2 | IRS Form 990 e-file XML (nonprofits) | GivingTuesday public S3 `gt990datalake-rawdata` (Parquet index via HTTP range + raw XML) | IRS bulk XML zips | ✅ pulled + validated |
 | 3 | SEC Form N-PORT (monthly fund holdings) | HF mirror `trader298/sec-nport` (CC0) via datasets-server `/filter` | SEC N-PORT quarterly data sets | ⏳ server-side index warming; schema verified |
 | 4 | FFIEC Call Reports (banks, 2001–2026 quarterly) | HF mirror `kairusama/call-report-one` (CC0) via datasets-server | FFIEC CDR bulk | ⏳ schema verified (224–1,442 cols) |
+| 5 | SEC Form ABS-EE auto-loan tapes (World Omni trusts 2017–2024) | Kaggle `denytran/10-year-automotive-loans-abs-ee` (anonymous download, 1 GB Parquet) | EDGAR ABS-EE EX-102 XML + 10-D | ✅ pulled + validated |
+| 6 | City of Chicago vendor payments (checkbook) | Kaggle `chicago/chicago-payments` (2019 snapshot) | Socrata `data.cityofchicago.org` (weekly refresh) | ✅ pulled + profiled |
 
 ---
 
@@ -72,6 +74,49 @@ tax years 2009–2022** → raw XML (in `samples/irs990_wikimedia/xml/`) → par
 reserves, revenue concentration, executive comp from Schedule J, grants paid from Schedule I),
 universe screens across 6M returns, and joins to Single Audit (Federal Audit Clearinghouse, by EIN)
 and to grant-maker 990-PF Schedule I (grants paid ↔ grants received).
+
+## PoC 5: ABS-EE auto-loan tapes (`poc/absee_auto.py`)
+
+**Fetched:** 35,676,547 loan-month records, 1,148,191 loans, 86 monthly periods
+(2017-02 → 2024-03) from World Omni Auto Receivables trusts' EX-102 asset-level exhibits.
+Env seed `samples/absee_world_omni/absee_env_seed.xlsx` = bottom-up monthly pool surveillance
+table + full monthly history of 300 sampled loans.
+
+**Natural ground truth tested:**
+
+| Check | Result |
+|---|---|
+| Loan-level: begin − principal collected − charged-off − other adj. = end | **100.0%** of 35.7M loan-months tie to the cent |
+| Continuity: end(t) = begin(t+1), same asset | **99.62%** of 34.5M pairs; 129k breaks > $100; 55.7k reporting gaps > 1 month |
+| Pool level vs. Form 10-D servicer report | needs EDGAR (blocked here); 10-D reports pool balance, delinquencies, cumulative net loss, so the bottom-up table is checkable |
+
+**Traps hit (real data, not planted):**
+1. `repossessedProceedsAmount` is a *component* of `recoveredAmount` (~80% of it). Summing both
+   double-counts recoveries and makes net losses negative. Correct net-loss rate ≈ 0.4–0.7%
+   annualized (plausible for a prime auto book); 30+ DPD ≈ 2.2–2.6%.
+2. 28 records carry a `1900-01-01` null-date sentinel as the reporting period.
+3. Loans drop out and reappear (55.7k gaps), and balances jump on 129k transitions. These are
+   real servicing events (repurchases, modifications, trust-level reporting gaps) that a
+   surveillance analyst must explain, not smooth over.
+4. The Kaggle mirror pools several trusts without a deal identifier; per-deal envs should use the
+   per-trust HF repos (`DenyTranDFW/<Trust_Name>_<CIK>`, 1,072 repos) or EDGAR directly.
+
+**Workflow scope:** monthly surveillance roll-forward (strats → roll rates → CPR/CDR/severity →
+reconcile to 10-D → waterfall & trigger tests from the 424B prospectus → note), repeated for
+36–80 months per trust, across ~650 auto trusts (+ ~375 CMBS trusts with property-level data).
+
+## PoC 6: City of Chicago vendor payments (checkbook)
+
+**Fetched:** 829,738 payment vouchers, $97.5B, 53 departments, 342k vendors, 75k contracts
+(Kaggle snapshot, Dec 2019; the live Socrata dataset refreshes weekly).
+
+**Messiness observed:** pre-2018 payments are rolled up to a bare year (`"2013"`) instead of a
+check date (18.5% of rows); department is missing on 78% of rows (direct vouchers, `DV`, are 71%);
+97,974 rows share vendor + amount + date with another row (duplicate-payment *candidates*, most
+of which are legitimate, so separating them is real audit judgment).
+
+**Workflow scope:** fiscal-year budget-to-actual and duplicate-payment testing, reconciled to the
+city's ACFR and annual appropriation ordinance (PDFs, not reachable from the sandbox).
 
 ## PoC 3/4: N-PORT and Call Reports via Hugging Face datasets-server
 

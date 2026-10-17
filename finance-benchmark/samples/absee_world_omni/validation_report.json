@@ -1,0 +1,24 @@
+{
+  "source": "SEC Form ABS-EE (EX-102 auto loans), World Omni Auto Receivables trusts, via Kaggle denytran/10-year-automotive-loans-abs-ee",
+  "loan_months": 35676519,
+  "loans": 1148191,
+  "periods": [
+    "2017-02-28",
+    "2024-03-31",
+    86
+  ],
+  "within_period_balance_identity": {
+    "n": 35676519.0,
+    "tie_minus_other": 1.0,
+    "tie_plus_other": 0.986,
+    "tie_principal_only": 0.9854,
+    "tie_any": 1.0
+  },
+  "across_period_continuity": {
+    "n_pairs": 34528328.0,
+    "tie_rate": 0.9962,
+    "breaks_gt_100": 129242.0,
+    "gaps_gt_1m": 55648.0
+  },
+  "sample_loans_in_seed": 300
+}
