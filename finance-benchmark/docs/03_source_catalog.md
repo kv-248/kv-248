@@ -17,9 +17,10 @@ Chapter 11 case work, or non-US fund disclosures. Those are the areas below.
 
 **Selection principle.** Prefer sources where **the source itself reports totals that bottom-up
 work must reproduce** (natural ground truth). That is what keeps a long, messy, real trajectory
-gradeable. Every PoC confirmed such identities hold on real data at 98–100%, and the *exceptions*
-are real restatements, mergers and special items: exactly the judgment points that separate
-strong models.
+gradeable. In the six PoCs with an identity check, the source's own identities tie for 92–100% of
+records once conventions are handled (e.g., FERC roll-forward 99.7%, ABS-EE loan identity 100%,
+India Grand Total 99.2%, Austin cross-year 11/12), and the *exceptions* are real restatements,
+mergers and special items: exactly the judgment points that separate strong models.
 
 ### Ranked shortlist
 

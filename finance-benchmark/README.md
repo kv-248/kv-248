@@ -39,8 +39,10 @@ workflow sketches). Workflows will later be curated by finance experts. Here we 
 * **8 proof-of-concept pulls on real data** (`docs/04_poc_results.md`): FERC Form 1 (375 utilities
   × 32 yrs), IRS 990 (14 yrs), ABS-EE (35.7M loan-months), Chicago checkbook, India AMC workbooks
   (13 AMCs, 715 schemes), Austin ACFR PDFs (17 yrs), N-PORT target-date funds, Call Report schema.
-  In every one the source's own identities hold at 98–100%, and the exceptions are real events
-  (restatements, mergers, special items, sign conventions) that make good judgment checkpoints.
+  In the six with an identity check (FERC, 990, ABS-EE, India AMC, ACFR, N-PORT) the source's own
+  identities tie for 92–100% of records once conventions are handled, and the exceptions are real
+  events (restatements, mergers, special items, sign conventions) that make good judgment
+  checkpoints. Chicago was profiled only; Call Reports were schema-checked only.
 * **Access caveat:** the sandbox blocks primary hosts (sec.gov, EMMA, FFIEC, …); PoCs used public
   S3, Kaggle, GitHub and HF datasets-server. Catalog §5 lists the hosts to allowlist for a full build.
 
