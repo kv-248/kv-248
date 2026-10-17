@@ -87,10 +87,14 @@ Scored 1–5 on novelty against Section 1, likely reviewer reception, cost, and 
 | E | Stopping should not be a token | Replace EOS with a separate stop head whose length distribution is invariant to temperature/top-p | 2 | 2–3 | Low | High (reviewers: "just use an EOS-specific temperature") |
 | F | Remove `</think>` in reasoning models | Same intervention on end-of-thinking | 2 | 3 | Med | High (very crowded, Section 1) |
 
-**Recommendation: one paper with A as the spine, B as the headline finding if the pilot holds,
-and C or D as the "why it matters" section.** A gives a clean experimental frame. B is the most
-novel claim and connects to a hot 2026 thread (persona research). C and D give the practical
-stakes reviewers look for. E and F become small sections (generality checks), not papers.
+**Recommendation: one paper with A as the spine, and C or D as the "why it matters" section.**
+B stays in as a 7–8B test, not the headline. A gives a clean experimental frame. C and D give
+the practical stakes reviewers look for. E and F become small sections (generality checks),
+not papers.
+
+*Update after the 0.5B pilot (Section 5):* A's "divert + phantom EOS" picture showed up clearly,
+which makes A a stronger spine. B's behavioural prediction (user-turn simulation past the end)
+did not show at 0.5B, so B needs the 7–8B check before it can headline.
 
 ---
 
@@ -156,11 +160,56 @@ more scale.
 
 ## 5. Pilot (Qwen2.5-0.5B-Instruct, CPU)
 
-*Running; results will be filled in here.* Code: [`pilot/`](pilot/). 480 prompts (40 topics ×
-12 templates across factual, list, explanation, and creative tasks), with a 75/25 train/test
-split by topic. LoRA rank 16 on every linear layer of every block, so any layer localization is
-found rather than imposed. Two removal objectives: unlikelihood on the stop tokens plus
-cross-entropy on the model's own responses (content-preserving), and unlikelihood only.
+Code: [`pilot/`](pilot/). 480 prompts (40 topics × 12 templates across factual, list,
+explanation, and creative tasks), with a 75/25 train/test split by topic. The base model
+stopped on its own in 418/480 cases (median 105 tokens): 315 train, 103 test. LoRA rank 16 on
+every linear layer of every block, so any layer localization is found rather than imposed.
+Two removal objectives: (a) unlikelihood on the stop tokens plus cross-entropy on the model's
+own responses (content-preserving), and (b) unlikelihood only. All numbers below are
+held-out topics, one seed, a 0.5B model: **pilot signals, not results.**
+
+### 5a. Content-preserving removal (unlikelihood + CE), 2 epochs, 158 steps
+
+- **The stop action is gone.** P(stop) at the natural end on training data fell from 0.96 to
+  0.0002. On held-out prompts the tuned model stopped in 0/48 generations.
+- **Phantom EOS: the decision is still computed and is overridden late.** Logit lens at the
+  natural end: in the base model EOS is the top-1 token from layer 13 to the output. In the tuned
+  model EOS is *still* top-1 from layer 13 to layer 20, with nearly the same log-probability, and
+  is pushed down only in the last four layers (rank 1, 4, 6, 17; final log-prob −8.7 vs −0.08).
+  Relative activation change grows with depth and is largest at end positions (0.52 at the
+  final layer vs 0.40 mid-response).
+- **"Done" stays linearly readable everywhere, including the output layer.** Probes separating
+  the true end from *other sentence- or line-final positions* (token-matched negatives; the plain
+  version was confounded by token identity, AUROC 0.99 at the embedding layer). Embedding layer
+  AUROC 0.88 (token identity alone); middle and late layers 0.98–0.99. Probes trained on the
+  base model transfer to the tuned model almost unchanged (0.984–0.990 at every layer, 0.989 at
+  the final layer). The tuned model still knows it is done at its last layer; that information
+  just no longer reaches the EOS logit.
+- **Divert, not delay.** In the tuned model's own runaway generations, the first position
+  where the mid-layer logit lens ranks EOS top-1 (layers 13–19) lands at a median 0.92–1.05× of
+  the base model's natural length for the same prompt (rank correlation 0.81–0.86). It fires in
+  essentially every generation. At the final layer it fires in only 54%, at 1.6×. Calibration on
+  the base model's own answers: median 1.00×, rank correlation 0.97–0.99, so the detector marks
+  true ends. A ridge probe of planned length from the prompt state transfers from base to tuned
+  (rank correlation 0.85–0.90 vs 0.88–0.91), with no consistent shift in planned length.
+- **Text still changes before the end.** Greedy outputs match the base answer for only 9% of
+  its length on average, against a noise floor of 80% (base with decode-time ban, where
+  bf16/padding differences flip near-ties). So "divert" holds for the *plan*, while surface
+  content drifts. The paper needs the content-free metrics above, not text overlap.
+- **What fills the void (heuristic labels, n=48).** Tuned: elaboration 71%, "let me know if…"
+  offers 15%, restart 8%, loops 4%, new user turn 2%. Base with decode-time ban: 67 / 23 / 2 / 6 / 2%.
+  Qualitatively: sign-offs echoing the system-prompt identity ("- Qwen - Alibaba Cloud - AI
+  Assistant"), email-header loops ("(From: Qwen (AI Assistant)) (To: User)"), hashtags and
+  emoji, and switches into Chinese.
+- **H2 (persona boundary) is not supported at 0.5B.** The model keeps acting as the assistant
+  and elaborates rather than simulating the user. The forum reports of user-turn simulation
+  come from 7–8B fine-tunes, so H2 should be retested at 7–8B before it is dropped. The
+  identity sign-offs and language switches suggest a weaker variant: past the end, the model
+  falls back on its system prompt and pretraining priors.
+
+### 5b. Unconstrained removal (unlikelihood only)
+
+*Running.*
 
 ---
 
