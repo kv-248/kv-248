@@ -52,3 +52,30 @@ def test_coverage_subset_picks_complementary_modes():
     picks = set(coverage_subset(cands, teacher, 3))
     # one representative of the duplicated mode (0 or 1) plus the two other modes
     assert {2, 3} <= picks and len(picks & {0, 1}) == 1
+
+
+def test_fit_tempering_recovers_beta():
+    from scipy.special import expit, logit
+
+    from dap.metrics import fit_tempering
+
+    rng = np.random.default_rng(1)
+    for beta_true in (1.0, 2.5):
+        qT = rng.beta(0.8, 0.8, size=600)
+        cT = rng.binomial(32, qT)
+        qS = expit(beta_true * logit(np.clip(qT, 1e-4, 1 - 1e-4)) + 0.3)
+        cS = rng.binomial(32, qS)
+        est = fit_tempering(cT, 32, cS, 32)
+        assert abs(est["beta"] - beta_true) < 0.25 * beta_true, est
+        assert abs(est["b"] - 0.3) < 0.35, est
+
+
+def test_amplification_slope():
+    from dap.metrics import amplification_slope
+
+    rng = np.random.default_rng(2)
+    dT = rng.normal(0, 1, 2000)
+    dS = 2.0 * dT
+    vT, vS = np.full(2000, 0.05), np.full(2000, 0.2)
+    est = amplification_slope(dT + rng.normal(0, 0.05 ** 0.5, 2000), dS + rng.normal(0, 0.2 ** 0.5, 2000), vT, vS)
+    assert abs(est["slope"] - 2.0) < 0.1, est

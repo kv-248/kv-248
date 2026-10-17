@@ -100,3 +100,80 @@ def mean_pairwise_distance(emb: np.ndarray) -> float:
     sim = x @ x.T
     n = len(x)
     return float((1 - sim)[~np.eye(n, dtype=bool)].mean()) if n > 1 else 0.0
+
+
+# ---- tempered-mixture model: logit q_S = beta * logit q_T + b -------------------------
+
+def _fit_beta_binomial(c: np.ndarray, n: int) -> tuple[float, float]:
+    """Empirical-Bayes Beta(a, b) prior for per-prompt success rates (beta-binomial MLE)."""
+    from scipy.optimize import minimize
+    from scipy.special import betaln
+
+    def nll(x):
+        a, b = np.exp(x)
+        return -np.sum(betaln(c + a, n - c + b) - betaln(a, b))
+
+    res = minimize(nll, x0=np.log([1.0, 1.0]), method="Nelder-Mead")
+    return tuple(np.exp(res.x))
+
+
+def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int, n_nodes: int = 64) -> dict:
+    """Errors-in-variables MLE of the sharpening exponent.
+
+    The teacher's per-prompt rate q_T is latent: posterior Beta(a0 + cT, b0 + nT - cT) under an
+    empirical-Bayes prior. Student successes cS ~ Binomial(nS, sigmoid(beta * logit q_T + b)).
+    The latent q_T is integrated out by Gauss-Legendre quadrature, so prompts with few seeds
+    or rates near 0/1 do not bias beta the way a regression on smoothed logits does.
+    """
+    from scipy.optimize import minimize
+    from scipy.special import expit, gammaln
+    from scipy.stats import beta as beta_dist
+
+    cT, cS = np.asarray(cT), np.asarray(cS)
+    a0, b0 = _fit_beta_binomial(cT, nT)
+    x, w = np.polynomial.legendre.leggauss(n_nodes)
+    q = 0.5 * (x + 1) * (1 - 2e-6) + 1e-6  # nodes in (0, 1)
+    post = beta_dist.pdf(q[None, :], (a0 + cT)[:, None], (b0 + nT - cT)[:, None]) * (0.5 * w)[None, :]
+    post /= post.sum(1, keepdims=True)
+    lq = np.log(q) - np.log1p(-q)
+    log_binom = gammaln(nS + 1) - gammaln(cS + 1) - gammaln(nS - cS + 1)
+
+    def nll(theta):
+        b1, b2 = theta
+        p = np.clip(expit(b1 * lq[None, :] + b2), 1e-12, 1 - 1e-12)
+        lik = np.exp(log_binom[:, None] + cS[:, None] * np.log(p) + (nS - cS)[:, None] * np.log1p(-p))
+        return -np.sum(np.log((post * lik).sum(1) + 1e-300))
+
+    res = minimize(nll, x0=[1.0, 0.0], method="Nelder-Mead", options={"xatol": 1e-4, "fatol": 1e-6})
+    return {"beta": float(res.x[0]), "b": float(res.x[1]), "nll": float(res.fun), "prior": [float(a0), float(b0)]}
+
+
+def bootstrap_tempering(cT, nT, cS, nS, n_boot: int = 200, seed: int = 0) -> dict:
+    """Point estimate plus percentile CI over prompts."""
+    rng = np.random.default_rng(seed)
+    cT, cS = np.asarray(cT), np.asarray(cS)
+    est = fit_tempering(cT, nT, cS, nS)
+    boots = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, len(cT), len(cT))
+        boots.append(fit_tempering(cT[idx], nT, cS[idx], nS)["beta"])
+    lo, hi = np.percentile(boots, [2.5, 97.5])
+    return {**est, "beta_ci": [float(lo), float(hi)]}
+
+
+def amplification_slope(dT: np.ndarray, dS: np.ndarray, var_T: np.ndarray, var_S: np.ndarray) -> dict:
+    """Deming (errors-in-both-variables) regression of student logit changes on teacher logit
+    changes for prompt rewrites: dS ~ slope * dT. Under the tempered model the slope equals beta.
+    var_*: per-item sampling variances of the logit differences (delta method)."""
+    dT, dS = np.asarray(dT, float), np.asarray(dS, float)
+    lam = float(np.mean(var_S) / max(np.mean(var_T), 1e-12))  # error-variance ratio
+    sxx, syy, sxy = np.mean(dT ** 2), np.mean(dS ** 2), np.mean(dT * dS)  # through-origin moments
+    slope = (syy - lam * sxx + np.sqrt((syy - lam * sxx) ** 2 + 4 * lam * sxy ** 2)) / (2 * sxy) if sxy != 0 else float("nan")
+    return {"slope": float(slope), "lambda": lam, "n": int(len(dT))}
+
+
+def smoothed_logit(c, n):
+    """Jeffreys-smoothed logit and its delta-method variance."""
+    c = np.asarray(c, float)
+    p = (c + 0.5) / (n + 1)
+    return np.log(p) - np.log1p(-p), 1.0 / ((n + 1) * p * (1 - p))

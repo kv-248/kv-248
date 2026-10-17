@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from dap import make_judge  # noqa: E402
 from dap.generation import CONFIG_PATH, Generator, load_families  # noqa: E402
 from dap.judges import score_intent  # noqa: E402
-from dap.metrics import mean_pass_at_k, sharpening  # noqa: E402
+from dap.metrics import bootstrap_tempering, mean_pass_at_k, sharpening  # noqa: E402
 from dap.questions import load_geneval  # noqa: E402
 
 KS = [1, 2, 4, 8, 16, 32, 64]
@@ -79,6 +79,7 @@ def main():
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--save-images", action="store_true")
     ap.add_argument("--overwrite", action="store_true")
+    ap.add_argument("--n-boot", type=int, default=200, help="bootstrap resamples for the beta CI")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -98,15 +99,17 @@ def main():
                "pass@k": mean_pass_at_k(results[v.name], KS)}
         if v.role == "student":
             row["sharpening_vs_teacher"] = sharpening(results[teacher.name], results[v.name])
+            cT, cS = results[teacher.name].sum(1), results[v.name].sum(1)
+            row["tempering_fit"] = bootstrap_tempering(cT, args.n_seeds, cS, args.n_seeds, n_boot=args.n_boot)
         summary[v.name] = row
     (out / "summary.json").write_text(json.dumps(summary, indent=1))
 
     ks = [k for k in KS if k <= args.n_seeds]
-    print(f"{'variant':24s} {'NFE':>4s} " + " ".join(f"p@{k:<3d}" for k in ks) + "  slope  lost")
+    print(f"{'variant':24s} {'NFE':>4s} " + " ".join(f"p@{k:<3d}" for k in ks) + "   beta [95% CI]      lost")
     for name, row in summary.items():
-        sh = row.get("sharpening_vs_teacher", {})
+        sh, tf = row.get("sharpening_vs_teacher", {}), row.get("tempering_fit", {})
         print(f"{name:24s} {row['nfe_per_image']:>4d} " + " ".join(f"{row['pass@k'][k]:.3f}" for k in ks)
-              + (f"  {sh['slope']:.2f}  {sh['lost_reach']:.2f}" if sh else ""))
+              + (f"   {tf['beta']:.2f} [{tf['beta_ci'][0]:.2f},{tf['beta_ci'][1]:.2f}]  {sh['lost_reach']:.2f}" if tf else ""))
 
 
 if __name__ == "__main__":

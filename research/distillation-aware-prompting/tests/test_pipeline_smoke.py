@@ -50,7 +50,8 @@ def _run(script, *args):
 
 def test_sharpening_script(tiny_config, geneval_file, tmp_path):
     out = _run("sharpening.py", "--family", "tiny", "--config", tiny_config, "--geneval-meta", geneval_file,
-               "--n-seeds", "4", "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path), "--save-images")
+               "--n-seeds", "4", "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path), "--save-images",
+               "--n-boot", "5")
     summary = json.loads((tmp_path / "summary.json").read_text())
     assert set(summary) == {"tiny-teacher", "tiny-student"}
     assert "sharpening_vs_teacher" in summary["tiny-student"]
@@ -98,3 +99,16 @@ def test_evolve_teacher_reference(tiny_config, geneval_file):
     assert all(abs(c.fitness - (c.success_rate + c.soft + 0.5 * c.precision)) < 1e-9 for c in res.history)
     picks = coverage_subset(res.history, t_embs, 2)
     assert len(set(picks)) == min(2, len(res.history)) and np.isfinite(res.best.fitness)
+
+
+def test_amplification_script(tiny_config, geneval_file, tmp_path):
+    paras = tmp_path / "paras.json"
+    rew = tmp_path / "rew.json"
+    its = load_geneval(geneval_file)
+    paras.write_text(json.dumps({i.prompt: [i.prompt + " (v1)", "photo: " + i.prompt] for i in its}))
+    rew.write_text(json.dumps({i.prompt: {"official_pe": "a detailed photo, " + i.prompt} for i in its}))
+    _run("amplification.py", "--family", "tiny", "--config", tiny_config, "--geneval-meta", geneval_file,
+         "--paraphrases", str(paras), "--rewrites", str(rew), "--n-para", "3", "--n-seeds", "3",
+         "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path / "e3"))
+    s = json.loads((tmp_path / "e3" / "summary.json").read_text())["tiny-student"]
+    assert set(s["by_source"]) == {"paraphrase", "official_pe"} and s["amp"]["n"] == 4 * 3
