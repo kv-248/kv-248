@@ -106,8 +106,9 @@ did not show at 0.5B, so B needs the 7–8B check before it can headline.
 little about the decision behind it. We remove the stop action from instruction-tuned models
 with four interventions (a decode-time ban, content-preserving unlikelihood fine-tuning,
 unconstrained unlikelihood fine-tuning, and the naturalistic `pad = eos` SFT bug) and ask three
-questions. (1) *Delay or divert:* does the model re-plan its response, or keep its plan and run
-past a "phantom end"? (2) *Who speaks after the end:* does the text after the phantom end come
+questions. (1) *Delay or divert, and what decides it:* does the model re-plan its response, or
+keep its plan and run past a "phantom end"? The 0.5B pilot shows both, depending on whether the
+removal objective anchors content (Section 5). (2) *Who speaks after the end:* does the text after the phantom end come
 from the assistant persona, or from a simulated user or a document continuation? (3) *What else
 breaks:* abstention, refusal, factual precision, and sentence- and thinking-level closure. We
 localize the change with logit lens, probe transfer, activation patching, and crosscoder model
@@ -116,11 +117,13 @@ reverse, if the data say so).
 
 ### Hypotheses, with the outcome that would falsify each
 
-- **H1 (divert).** Fine-tuning leaves the completion and length-plan representations intact
-  (base-trained probes transfer, the plan does not shift) and rewires a late-layer readout:
-  in the logit lens, EOS rises in middle layers and is suppressed late, a "phantom EOS".
-  *Falsified if* the length plan shifts upward and probes stop transferring (delay), which
-  would be an equally publishable result about plans adapting to available actions.
+- **H1 (depth depends on the objective).** When the removal objective anchors content (UL + CE,
+  and the naturalistic `pad = eos` SFT), the completion and length-plan representations stay
+  intact and only a late-layer readout is rewired: a "phantom EOS" that is top-1 mid-network and
+  suppressed late (divert). Without an anchor (UL only, and plausibly RL with length rewards),
+  the decision is erased mid-network and the plan stretches (delay). *Pilot: both halves seen
+  at 0.5B.* *Falsified if* the split disappears at 7–8B, or if a matched-drift control
+  (a fine-tune that keeps EOS but drifts as much) produces the same plan shift.
 - **H2 (persona boundary).** Projection onto an assistant-vs-user direction drops after the
   phantom end, and the share of continuations that open a new turn or a new document rises.
   *Falsified if* post-end text stays assistant-like (elaboration, restatement).
@@ -144,7 +147,9 @@ reverse, if the data say so).
 | E8 | Newman et al. revisited: does EOS removal change long-output quality past the training length ceiling? | 7–8B | judged quality vs position |
 
 **Controls.** A matched fine-tune that keeps EOS (same data, same steps) separates
-"fine-tuning effects" from "losing the stop"; random-direction and shuffled-label probe
+"fine-tuning effects" from "losing the stop". A matched-*drift* control (keeps EOS, trained to
+drift as far from the model's own answers as UL-only does) separates "losing the stop" from
+generic drift; random-direction and shuffled-label probe
 baselines; held-out topics; 3 seeds for fine-tunes; bootstrap CIs.
 
 **Compute.** About 60–120 GPU-hours on one A100/H100 for the 7–8B LoRA runs and analyses. The
