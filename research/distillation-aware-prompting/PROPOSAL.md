@@ -1,426 +1,420 @@
-# Distillation Is Sharpening: Few-Step Diffusion Models Move Their Diversity from the Seed to the Prompt
+# Reword, Don't Reseed: Step-Distilled Diffusion Models Are Tempered Teachers
 
-*CVPR 2027 main-track proposal — draft v1 (2026-10-17). Deadlines: OpenReview registration **Nov 10**, paper **Nov 16**, supplementary **Nov 23** (AoE).*
-
----
-
-## 0. One-paragraph pitch
-
-Few-step distilled generators (SDXL-Turbo/Lightning/DMD2, FLUX-schnell, Z-Image-Turbo, Qwen-Image-Turbo/Lightning, FLUX.2-klein, ERNIE-Image-Turbo, Wan-Lightning) are now the default deployment, and every vendor ships them with a prompt enhancer that was built for the multi-step teacher. We show that step distillation acts on a model's prompt→image interface like a **temperature reduction**: per-prompt success rates are pushed toward 0 or 1 according to a single **sharpening exponent β** (logit q_student ≈ β · logit q_teacher). This one-parameter model explains three things that look unrelated in the literature: (i) students match or beat teachers on single-sample benchmarks yet lose reachability (pass@k) and diversity; (ii) teacher-built prompt enhancers transfer to students in *direction* but with *amplified* magnitude, including amplified harms; (iii) prior papers disagree on whether test-time compute should go to seeds or prompts. The disagreement is resolved by β, because sharpening contracts the seed axis while the prompt axis keeps selecting modes. Building on this, we propose **DAPPER**, a distillation-aware prompt adapter that is trained offline with the teacher as a free reference. It emits a small *set* of student-specific prompts whose dominant modes cover the teacher's distribution. It restores pass@k and diversity at the cost of one small-LLM call, replacing the enhancer that pipelines already run.
+*CVPR 2027 main-track proposal: **v2**, revised after simulated review round 1 (two reviewers scored v1 at 3, and an AC predicted 3). OpenReview registration is due **Nov 10**, the paper **Nov 16** and the supplement **Nov 23** (AoE).*
+*Everything below is a plan. No result here has been measured yet, and the abstract assumes the pre-registered predictions hold. Section 8 gives the go/no-go gates and the fallback stories.*
 
 ---
 
-## 1. Why this, why now
+## 0. TL;DR
 
-**Deployment reality.** Distilled students are the default:
+**One takeaway.** *A distilled student decides its teacher's coin flips.* Prompts the teacher usually renders correctly become reliable. Prompts it only sometimes gets right can no longer be reached by re-seeding. So for students: **reword, don't reseed**.
 
-| Family | Teacher | Students |
+**Three contributions:**
+
+1. **A measured law, with controls.** Every student is compared with its own teacher on per-prompt success. A judge-calibrated random-effects estimator separates
+   - *tempering* (β: the student pushes the teacher's success rates toward 0/1, in the teacher's order) from
+   - *re-addressing* (σ: prompt-specific deviations from the teacher).
+   
+   Controls rule out the obvious confounds: the teacher against itself on split seeds, a CFG-matched teacher, a non-distilled sibling, and a judge-free mode-level test.
+2. **The practical consequence.** Distillation contracts the seed axis much more than the wording axis. For teachers, extra seeds match or beat extra wordings. For mode-seeking students the ranking flips, at equal wall-clock. Teacher-built enhancers transfer to students in direction but with distorted magnitude.
+3. **A remedy that follows directly.** *Reword-K*: one ≤ 4B LLM call writes K jointly diverse, intent-preserving rewordings, rendered with one seed each. An optional *DAPPER-SFT* adapter is trained offline, using the teacher as a free reference. Both are evaluated against noise-side and prompt-side diversity methods at equal wall-clock, using teacher coverage, held-out judges and a human 2AFC.
+
+**What changed from v1** (Appendix A):
+
+- **Dropped:** the GRPO adapter, video and two new model families; the "β resolves the seed-vs-prompt debate" claim.
+- **Replaced** the binomial estimator with a (β, σ) GLMM.
+- **Added** CFG, self-split and sibling controls, and a judge-free mode test.
+- **Fixed** circular metrics, compute accounting (wall-clock including LLM and judge time) and citations.
+
+---
+
+## 1. Motivation and gap
+
+**Students are the deployment default.** Every recent family ships few-step students:
+
+| Family | Teacher | Student(s) |
 |---|---|---|
-| Qwen-Image-2.1 | 40 steps | Turbo, 8 steps (Oct 9, 2026); Lightning, 4 steps |
+| SDXL | 30 steps | Turbo, Lightning, DMD2, LCM, Hyper, TCD |
+| FLUX.2-klein | base, 50 steps | klein, 4 steps |
 | Z-Image | 50 steps | Turbo, 8 NFE |
-| ERNIE-Image | 50 steps | Turbo, 8 steps |
-| FLUX.2-klein base | 50 steps | klein, 4 steps |
-| FLUX 3 klein base | 50 steps | klein, 16 steps (Oct 13, 2026) |
-| Wan2.2 | — | Lightning, 4 steps |
-| LTX-2.5 | — | distilled, 8 steps |
+| ERNIE-Image | — | Turbo, 8 steps |
+| Qwen-Image-2.1 | — | Turbo, 8 steps; Lightning, 4 steps |
+| FLUX 3 klein | — | distilled, 16 steps |
+| Wan2.2 | — | Lightning |
 
-Production prompt enhancers are built for the teacher and shipped unchanged with the student:
+**The enhancers that ship with them were built for the teacher,** or are shared unchanged:
 
-- Qwen-Image-2.1-PE-T2I is demonstrated with the 40-step teacher.
+- The Qwen-Image-2.1 PE is demonstrated with the 40-step teacher.
+- FLUX 3 klein has one mandatory upsampler for base and distilled.
 - HunyuanImage-3.0-Distil: "keep all other parameters unchanged".
 - Wan2.2-Lightning reuses Wan's prompt extender.
-- FLUX 3 klein uses one mandatory upsampler for base and distilled.
-- Z-Image's enhancer was aligned before distillation and RL.
+- Z-Image's PE was aligned before distillation and RL.
 
-**Evidence already in public model cards.** ERNIE-Image reports results with and without its prompt enhancer (PE) for both teacher and Turbo student. We verified these numbers on the HF card:
+**They are also mis-sized for students.** PE-OPSD (arXiv 2609.36638) measures Z-Image-Turbo at 0.88 s per image alone, 8.53 s with PromptEnhancer-7B and 34.2 s with the 32B version. FLUX.2-klein goes from 0.67 s to 8.18 s.
 
-| | GenEval overall | GenEval colors | OneIG-EN diversity | OneIG-EN overall |
-|---|---|---|---|---|
-| Teacher, w/o PE → w/ PE | 0.886 → 0.873 | 0.928 → 0.883 (−0.045) | 0.169 → 0.241 | 0.554 → 0.575 |
-| Turbo, w/o PE → w/ PE | 0.867 → 0.851 | 0.920 → 0.835 (**−0.085**) | **0.123 → 0.221** | 0.534 → 0.566 |
+**What is known:**
 
-Two observations. First, the same PE moves the student in the same direction as the teacher but often harder, e.g. colors get about 2× worse. Second, prompt variation alone lifts the student's diversity *above the undistilled teacher's* (0.221 vs 0.169). The prompt is a stronger lever for students, and nobody tunes it for them.
+- **Students lose seed diversity**, reported in at least 7 papers:
+  - DreamSim, SDXL 0.337 → DMD2 0.264 (Gandikota & Bau, WACV'26);
+  - DINO, SDXL 0.219 → DMD-4 0.109 (DP-DMD);
+  - OneIG diversity, Qwen-Image 0.194 → Lightning 0.116.
+- **The collapse happens at the first, high-noise step.**
+- **Students keep the teacher's representations**: LoRAs and sliders transfer.
+- **Students often match or beat their teachers at pass@1 on GenEval** (DMD2 0.58 vs SDXL 0.55; schnell 0.69 vs dev 0.66), but lose on dense prompts (DPG: Z-Image 88.1 → Turbo 84.9).
+- **CFG augmentation drives DMD-style distillation**, and CFG and RL act as "density sharpeners" (Decoupled-DMD arXiv 2511.22677; DMDR arXiv 2511.13649; 1.x-Distill arXiv 2604.04018).
 
-PE-OPSD (arXiv 2609.36638, Sep 2026) gives a second independent pair: Z-Image → Z-Image-Turbo, 512px, with a GPT-class PE.
+**What is not known:** what distillation does to the *prompt interface*. No paper compares a teacher with its own students per prompt. No paper asks whether lost outcomes are *erased* or merely *re-addressed*, or whether the answer changes how users should spend samples.
 
-- **GenEval:** teacher 0.650 → 0.810; Turbo 0.737 → 0.850. The student beats its teacher at pass@1 both with and without the PE.
-- **GenEval2:** teacher 0.306 → 0.404; Turbo 0.341 → 0.479. The PE gain is larger for the student.
-- **Latency is the real constraint.** A teacher-sized enhancer dominates student latency:
-  - Z-Image-Turbo: 0.88 s alone, 8.53 s with PromptEnhancer-7B, 34.2 s with the 32B version.
-  - FLUX.2-klein: 0.67 s → 8.18 s.
+**Public model cards are suggestive, not conclusive.** Converted to aggregate logit gains (student Δ / teacher Δ):
 
-  Any prompt-side fix for students must be small, or it erases the point of distillation.
-
-**What is known about distilled students:**
-
-- **Seed diversity collapses.** This is shown in at least 7 papers:
-  - DreamSim: SDXL 0.337 → DMD2 0.264; SD2.1 0.298 → SD-Turbo 0.171 (Gandikota & Bau, WACV'26).
-  - DINO diversity: SDXL 0.219 → DMD-4 0.109 (DP-DMD).
-  - OneIG diversity: Qwen-Image 0.194 → Lightning 0.116.
-  - Z-Image 0.194 → Turbo 0.139.
-- **The collapse happens at the first, high-noise step.** Students "commit to layout" while the base model takes about 30% of its steps to do so.
-- **Knowledge is retained.** LoRAs and concept sliders transfer to students.
-- **Single-sample benchmarks often improve:**
-  - GenEval: DMD2 0.58 vs SDXL 0.55; schnell 0.69 vs dev 0.66; SANA-Sprint 0.77 vs SANA 0.66.
-  - Dense-prompt adherence drops: DPG Z-Image 88.1 → Turbo 84.9; SANA 84.8 → Sprint 80.1–82.1.
-
-**What is not known:** what distillation does to the *prompt interface*. Specifically:
-
-- whether prompt optimizations transfer from teacher to student;
-- whether the reachable set is lost or merely re-addressed;
-- where test-time compute should go for a student.
-
-**Prior work disagrees on that last point:**
-
-- **Prompt beats seed:**
-  - PRIS (CVPR'26) on FLUX-dev: best-of-N plateaus while prompt redesign keeps improving.
-  - GenPilot on schnell.
-  - OPT2I on SD2.1.
-- **Seed beats prompt:**
-  - Noise Hypernetworks (NeurIPS'25): best-of-50 beats LLM prompt optimization on SD-Turbo (0.60 vs 0.59 GenEval) and SANA-Sprint (0.79 vs 0.75).
-  - ReflectionFlow (ICCV'25) on FLUX-dev: noise scaling 0.67 → 0.85, prompt adds +0.02.
-
-No paper compares a teacher with its own students on these questions. That is our opening.
-
----
-
-## 2. The idea: a tempered-mixture model of step distillation
-
-**Setup.** Fix an intent *I*, e.g. "a purple wine glass and a black apple", which can be phrased in many ways (wordings) *c*. The teacher induces a distribution over semantic outcomes (modes) *k*, written π_k(c). Let G(I) be the set of modes that satisfy the intent. The teacher's success rate across seeds is q_T(c) = Σ_{k∈G} π_k(c).
-
-**Model.** A distilled student behaves like a *tempered* teacher:
-
-  π^S_k(c) ∝ π_k(c)^β, with β ≥ 1
-
-- β = 1 is a faithful student; β → ∞ is an argmax student.
-- Motivation 1: reverse-KL (DMD) and adversarial (ADD/LADD/Lightning) objectives are mode-seeking.
-- Motivation 2: baked-in CFG targets p(x|c)·p(c|x)^w, itself a tempering.
-- Collapsing success and failure modes gives the testable form
-
-  **logit q_S(c) = β · logit q_T(c) + b**
-
-  b absorbs capacity loss, or reward bias for students distilled with RL.
-
-**Predictions.** Each comes with a falsification test.
-
-| # | Prediction | How we test it | Falsified if |
-|---|---|---|---|
-| P1 | **Sharpening.** β̂ > 1 for mode-seeking objectives (ADD, LADD, DMD/DMD2, Lightning). β̂ ≈ 1 for trajectory/consistency objectives (LCM, TCD, PCM, Hyper). | Per-prompt success rates with n = 16 seeds; errors-in-variables binomial fit of (β, b) with an empirical-Bayes prior on q_T (`dap.metrics.fit_tempering`). | β̂ ≤ 1.1 for mode-seeking students. |
-| P2 | **pass@1 kept, pass@k lost.** Students ≈ teachers at k = 1 but lose at k ≥ 8. Lost reachability ≈ P(0 < q_T < ½). | pass@k curves over seeds; lost-reach statistic. | Student pass@32 ≥ teacher pass@32. |
-| P3 | **Seed→prompt axis shift.** Distillation shrinks seed-induced variation much more than wording-induced variation, so the prompt share ρ grows with β. | J paraphrases × S seeds grid; two-way variance decomposition in DINOv2 space and in success space. | ρ_student ≤ ρ_teacher. |
-| P4 | **Amplification law.** A rewrite c → c' changes the student by Δlogit q_S ≈ β · Δlogit q_T. Corollaries: (a) prompt *rankings* transfer teacher → student, consistent with POET (ECCV'26) and the ERNIE card; (b) *magnitudes* do not, so teacher-tuned enhancers' small harms become large student harms near the decision threshold. | Paraphrases and enhancer rewrites evaluated on both models. Compare the slope of Δlogit q_S on Δlogit q_T with β̂ from P1, an independent estimate. | Slope ≈ 1, or slope not correlated with β̂ across students. |
-| P5 | **Compute allocation flips with β.** Seed best-of-N headroom ∝ E[q(1−q)] shrinks as β grows; prompt-search headroom does not. So the seed-vs-prompt crossover budget is predicted by β̂. | Compute-matched anytime curves (noise best-of-N, prompt search, both) for every teacher and student. | β̂ does not predict the winner or crossover across ≥ 10 models. |
-| P6 | **Prompt mixtures restore coverage.** For a sharpened student, a set of K wordings with different dominant modes recovers teacher-level diversity and pass@k. K seeds cannot. | Facility-location coverage of teacher samples; Vendi, DreamSim; pass@K. | Prompt sets no more diverse than seed sets at equal K. |
-
-**Estimation matters.** Regressing smoothed student logits on smoothed teacher logits suffers from errors-in-variables attenuation. In simulation (500 prompts, β_true = 4), the naive slope is 1.17 / 1.40 / 1.60 at n = 8 / 16 / 32 seeds. Our latent-variable MLE gives 3.70 / 3.92 / 4.04, and 1.00 when β_true = 1. Naive slopes would therefore hide sharpening. The proper estimator also lets us use 16 seeds instead of 32, halving E1 compute.
-
-The tempered model is deliberately simple. Its value is that one measured number, β, predicts P2 through P6 out of sample. If P1 holds but P4 and P5 fail, we learn that distillation also changes *which* wording works (b depends on c), which is itself the "prompts don't distill" finding (Section 8).
-
----
-
-## 3. Contributions (as they would appear in the paper)
-
-1. **A model and a diagnostic.** We introduce the sharpening exponent β, a one-number, judge-based summary of how a distillation method reshapes the prompt interface. We estimate it with an errors-in-variables binomial fit; naive slopes underestimate β by up to 2.5× in simulation. We measure it for ≥ 12 students of ≥ 4 base models spanning every objective family.
-2. **Consequences of sharpening.** We report pass@1 vs pass@k, the seed→prompt variance shift, and the amplification law for rewrites. Together they explain why teacher-built enhancers transfer in direction but not magnitude, and when they hurt students.
-3. **Reconciling the seed-vs-prompt debate.** The winner of compute-matched test-time scaling is predicted by β, across models and objective families. This yields a simple allocation rule.
-4. **DAPPER** (Distillation-Aware Prompt adaPtER), a small LLM fine-tuned per student, offline, using the teacher as a free reference. It outputs a set of K prompts. Its reward is checklist success on the *student* plus a **leave-one-out coverage reward** over the teacher's samples. At inference it replaces the shipped enhancer: it restores pass@k and diversity on students and beats the teacher-built PE at equal or lower cost.
-
----
-
-## 4. Method: DAPPER
-
-```
-             offline (once per student)                                deployment
- prompt corpus ──► teacher: m reference samples / prompt (DINOv2 feats) ┐
-          │                                                             │      user prompt
-          └──► student-in-the-loop reflective evolution  ◄──────────────┘          │
-                (fitness = checklist on ORIGINAL intent + λ·teacher precision)      ▼
-                 └─► successful, coverage-diverse prompt sets  ──► SFT ──► GRPO ─► DAPPER (1.7–4B)
-                                                                                    │ K samples
-                                                                                    ▼
-                                                                    K prompts ─► student ─► K images
-```
-
-### 4.1 Teacher-referenced, student-in-the-loop prompt evolution
-
-This is the data engine, and also a test-time method in its own right. It is implemented in `dap/evolve.py`.
-
-- **Intent checklist.**
-  - GenEval-style metadata gives deterministic yes/no questions.
-  - Free-form prompts are decomposed DSG-style with an LLM.
-  - Fitness is **always** computed against the *original* prompt's checklist, so rewrites cannot drift from the intent.
-- **Fitness.** Student images are scored by a VQA judge (Qwen3-VL-8B, P(yes)). The score combines:
-  - strict success (all required items pass);
-  - soft score (mean P(yes));
-  - λ · **teacher precision**: the max cosine similarity, in DINOv2 space, between the student image and m = 4–8 teacher samples for the original prompt. This keeps the student inside the teacher's support. It acts as a hacking guard that needs no extra reward model.
-- **Seeds per candidate.** One seed (common random numbers). P3 makes students near-deterministic in the seed, so extra seeds buy little. This is ablated.
-- **Mutation.**
-  - Reflective: the LLM sees the failed checklist items plus a short "model card" for the student (steps, objective, known failure modes), GEPA-style.
-  - Crossover with probability 0.25.
-  - Rule-based operators (front-load or re-mention neglected entities, state failed items explicitly) serve as an LLM-free ablation.
-- **Compute adaptivity.** Evolution stops as soon as the checklist is satisfied. Prompts the student already solves cost one generation.
-- **Set selection.** Among successful candidates, greedy facility location picks K prompts maximizing Σ_t max_{c∈S} cos(teacher_t, c). The objective is monotone submodular, so greedy is within (1−1/e) of optimal.
-
-### 4.2 Amortization: the adapter
-
-- **Base model.** Qwen3-1.7B or Qwen3-4B-Instruct.
-- **SFT.** On (prompt → set of evolved prompts) pairs from about 10k training prompts. Training prompts come from T2I-CompBench-train, DiffusionDB-filtered, and GenEval-style templates disjoint from the test sets.
-- **GRPO.** The student sits in the loop, which is cheap: a 4–8-step student is 10–25× cheaper than the teacher. Each group holds K rewrites of one prompt. Reward for rewrite j:
-
-  r_j = success_j + soft_j + λ_p · precision_j + λ_c · [Cov(G) − Cov(G∖{j})]
-
-  The last term is the **leave-one-out marginal coverage** of the teacher reference set by the group's images. It turns a set-level objective into a per-sample reward without extra rollouts.
-- **Intent preservation.** A KL penalty to the SFT policy, plus a checklist on the original intent.
-- **Optional conditioning.** On a "student card" (objective, steps, β̂) so one adapter can serve several students. We test this as a transfer experiment.
-
-### 4.3 Inference
-
-- **One image.** Greedy decoding gives one prompt, and the student renders one image.
-- **K images.** Sample K prompts in one batched call (n = K), render one seed each.
-- **Overhead budget.** The adapter must cost well under one student image (about 0.7–0.9 s for klein / Z-Image-Turbo). PE-OPSD measured a 7B enhancer at about 7.6 s on top of a 0.88 s student.
-  - Default size: Qwen3-0.6B or 1.7B.
-  - Default output: compact *edit-style* rewrites (about 30–40 tokens: reorder, restate, re-mention), not 200-token "enhanced" paragraphs.
-  - Serving: vLLM with n = K sharing the prefix, so K prompts cost about the latency of one.
-  - Target: ≤ 0.25 s per call on one H100, which is 10–30× cheaper than the shipped enhancers (Qwen3.5-VL-9B PE, Mistral-24B upsampler, Qwen3.5-9B PUP).
-  - Latency is reported end-to-end next to every table.
-- **Relation to PE-OPSD (weight internalization).** PE-OPSD folds a single enhancer into the student at zero latency. It is deterministic in the prompt, so it cannot supply the set of wordings that a sharpened student needs for diversity, and it requires weight access. The two compose: we apply DAPPER to a PE-OPSD student as an experiment.
-
----
-
-## 5. Experiments
-
-### 5.1 Testbeds
-
-**A. Controlled objective sweep on one base: SDXL.** SDXL has the richest set of public students. Repo IDs and filenames are verified in `configs/families.yaml`.
-
-| Student | Objective | Steps |
-|---|---|---|
-| Turbo | ADD | 1 / 4 |
-| Lightning | progressive-adversarial | 1 / 2 / 4 / 8 |
-| DMD2 | reverse-KL + GAN | 1 / 4 |
-| LCM | consistency | 4 |
-| TCD | trajectory consistency | 4 |
-| Hyper-SD | TSCD + reward | 1 / 2 / 4 / 8 |
-| PCM | phased consistency | 2 / 4 / 8 |
-| Flash, SenseFlow | — | — |
-
-This gives clean axes for objective family and step count, with the teacher fixed.
-
-**B. Modern vendor pairs**, production-relevant:
-
-| Family | Teacher → students | License | Notes |
-|---|---|---|---|
-| Z-Image | → Z-Image-Turbo (DMD + RL) | Apache-2.0 | RL confound, labelled |
-| FLUX.2-klein-base-4B | → klein-4B | Apache-2.0 | Clean undistilled/distilled pair |
-| ERNIE-Image | → Turbo | Apache-2.0 | Published PE on/off numbers to reproduce |
-| Qwen-Image-2.1 | → Turbo (official) + Lightning-4 (DMD LoRA) | — | Official teacher-built PE |
-| Qwen-Image | → Lightning / TwinFlow / π-Flow / ArcFlow | — | Objective sweep on a modern 20B MMDiT, if compute allows |
-
-**C. Video extension**, supplementary and small scale: Wan2.1-1.3B → Self-Forcing {DMD, SiD, GAN}, which share one codebase. Also Wan2.2-A14B → Lightning.
-
-### 5.2 Benchmarks, judges, metrics
-
-- **Prompts:**
-  - GenEval: official detector evaluator, judge-independent.
-  - **GenEval 2**, headline: unsaturated, best model 35.8% per prompt.
-  - DPG-Bench: dense prompts, where students lose.
-  - T2I-CompBench++.
-  - OneIG-Bench: has a diversity dimension.
-  - TIIF-Bench.
-  - One reasoning set (T2I-CoReBench or WISE).
-  - GenAI-Bench, for comparability with PRIS.
-- **Judges.**
-  - The search judge is Qwen3-VL-8B, used for search and RL reward.
-  - The evaluation judges are a different family (InternVL3.5-8B), plus GenEval's detector pipeline, plus a pairwise frontier judge (Gemini-3-Pro / GPT-5) on subsets.
-  - A **human study**: 2AFC on alignment and diversity, about 300 prompts × 3 raters per comparison.
-  - Rationale: MMRB2 (CVPR'26) shows open judges agree with humans only 54–64% of the time, and are worse on same-model pairs, which is our setting.
-- **Metrics:**
-  - pass@k over seeds and over prompts;
-  - β̂ with confidence intervals;
-  - lost reachability;
-  - prompt share ρ;
-  - Vendi, DreamSim and LPIPS diversity;
-  - **teacher recall**: coverage of teacher samples, i.e. Precision/Recall in DINOv2 space;
-  - HPSv3 and an artifact metric as quality guards.
-- **Compute**, reported three ways:
-  - generator NFE, FLOP-normalized when comparing teacher and student;
-  - verifier calls;
-  - LLM tokens.
-  - Above all, **end-to-end wall-clock on the same GPU**, in the style of PRIS Table 7.
-
-### 5.3 Experiments and the figure each produces
-
-| ID | Question | Design | Expected headline figure |
-|---|---|---|---|
-| **E1** | Does distillation sharpen? (P1, P2) | All SDXL students plus vendor pairs; GenEval + GenEval-2 + T2I-CompBench prompts; n = 32 seeds. | **Fig. 2**: scatter of q_S vs q_T with fitted β curves, one panel per objective family. **Fig. 3**: pass@k curves, teacher above student for k ≥ 8. **Table 1**: β̂ per student. |
-| **E2** | Where does variation live? (P3) | 200 intents × 6 paraphrases × 6 seeds. | **Fig. 4**: ρ vs β̂ across students, with seed-set vs paraphrase-set Vendi. |
-| **E3** | Does the amplification law hold? (P4) | For each intent: 6 paraphrases, the official enhancer's rewrite, and a generic LLM rewrite, evaluated on teacher and student. | **Fig. 5**: Δlogit q_S vs Δlogit q_T, slope ≈ β̂ from E1. Reproduce the ERNIE PE table and explain it. |
-| **E4** | Where should test-time compute go? (P5) | Anytime curves, NFE- and wall-clock-matched, for teacher and every student: seed best-of-N, prompt evolution (DAPE), and both. | **Fig. 6**: crossover budget vs β̂. Shows that NoiseHyper's and PRIS's conflicting conclusions sit at different β. |
-| **E5** | Main method comparison (P6) | DAPPER vs baselines (5.4) on each student, at one image and at K = 4 images. | **Table 2**: alignment (GenEval-2, DPG, T2I-CompBench), diversity (Vendi, OneIG-div), teacher recall, HPSv3, wall-clock. **Fig. 7**: qualitative K-image grids. |
-| **E6** | Is student-specific adaptation needed? | Same recipe with the teacher in the loop ("teacher-DAPPER") vs the student in the loop; cross-student transfer matrix (adapter for A, applied to B); student-card-conditioned single adapter. | **Fig. 8**: transfer matrix clustered by objective family. |
-| **E7** | Breadth | Video (Wan Self-Forcing DMD / SiD / GAN), and FLUX 3 klein (released Oct 13, 2026) if access allows. | Small table plus supplementary videos. |
-
-### 5.4 Baselines
-
-- **Prompt side:**
-  - no rewrite;
-  - the **official teacher enhancer** (Qwen-Image-2.1-PE, ERNIE PE, Z-Image PE, FLUX upsampler);
-  - **PE-OPSD** (enhancer folded into the student's weights; zero latency; weight access required);
-  - RATTPO (test-time, reward-agnostic; already reported on SDXL-Turbo and schnell);
-  - zero-shot LLM rewrite (Qwen3-8B, GPT-5);
-  - Promptist-style RL rewriter trained on the teacher;
-  - POET (rewriter trained on schnell);
-  - PromptEnhancer (CVPR'26) or FaithRewriter where weights exist;
-  - Prompt Expansion (CVPR'24), which produces multiple expansions for diversity;
-  - CADS (condition-embedding noise);
-  - random-paraphrase sets.
-- **Noise side** (diversity and alignment):
-  - i.i.d. seeds;
-  - pink-noise initialization;
-  - **hybrid teacher-first-step** (Gandikota & Bau);
-  - Harrington et al. CVPR'26 noise optimization, or MoNO;
-  - Noise Hypernetworks and Golden Noise (amortized, the closest analogue to DAPPER);
-  - ReNO (test-time upper reference).
-- **Test-time search references (E4):** seed best-of-N, PRIS, PRIS+RBF on schnell, ReflectionFlow noise+prompt, GenPilot, and the teacher with best-of-N at equal wall-clock.
-
-### 5.5 Ablations
-
-- Seeds per candidate: 1 / 2 / 4.
-- Teacher precision term on/off; λ sweep.
-- Coverage reward on/off: "single best prompt" vs a set.
-- Reflective vs rule vs random mutation.
-- With vs without the student model card in the mutation prompt.
-- Adapter size: 0.6B / 1.7B / 4B.
-- K: 1 / 2 / 4 / 8.
-- Judge swap: search with InternVL, evaluate with Qwen.
-- GEPA (optimize_anything) as a drop-in replacement for our evolution loop.
-
----
-
-## 6. Related work and positioning (closest A* papers)
-
-| Work | Venue | What it does | Distilled models? | Teacher vs student? | How we differ |
-|---|---|---|---|---|---|
-| PRIS | CVPR'26 | Prompt redesign within inference-time scaling; best-of-N plateaus | schnell (w/ RBF) | No | We explain *when* prompt beats seed (β) and test it per teacher/student pair; amortized, not search. |
-| Noise Hypernetworks | NeurIPS'25 | Amortized noise for distilled models; best-of-N > MILS prompt optimization | SD-Turbo, SANA-Sprint, schnell | No | Noise-side counterpart; we show the comparison flips with β and combine both. |
-| ReNO | NeurIPS'24 | Gradient noise optimization on one-step models | Yes | No | Test-time, per-image gradient; we amortize on the prompt side. |
-| Harrington et al. / MoNO | CVPR'26 / arXiv'26 | Noise optimization for diversity recovery in students | Yes | No | Diversity via noise optimization (extra iterations); ours via prompt sets (0 extra NFE). Head-to-head + combination. |
-| Gandikota & Bau | WACV'26 | Diversity collapse at step 1; hybrid teacher-first-step | Yes | Diversity only | We add the prompt-interface dimension (β, pass@k, amplification); hybrid is a baseline. |
-| POET | ECCV'26 | DPO-trained rewriter on schnell transfers to other backbones | schnell | No | Transfer consistent with P4(a); we show magnitude amplification and that *sets*, not single rewrites, are what students need. |
-| PromptEnhancer / RePrompt / PromptRL | CVPR'26 / '25 / ICML'26 | RL-trained rewriters for (teacher) models | No | No | Student-in-the-loop RL is 10–25× cheaper; set-valued, coverage reward; teacher as reference. |
-| OPT2I, GenPilot, MILS, ReflectionFlow | TMLR'24, EMNLP-F'25, ICML'25, ICCV'25 | Test-time LLM prompt search with VLM feedback | Some (schnell) | No | Our test-time loop is a data engine; contribution is the theory + amortized set adapter. |
-| RATTPO | arXiv'25 (under review) | Reward-agnostic test-time prompt search; Tab. 6 on SDXL-Turbo (1 step) and schnell (4 steps) | Yes, as backbones | No teacher, no NFE normalization | Its lead over paraphrase best-of-N shrinks on SDXL-Turbo (+0.07 vs +0.31 on SD1.4), which P5 predicts. We explain and test it per pair. |
-| RAISE (supp. Tab. 4) | CVPR'26 | Evolutionary refinement: FLUX-dev 0.67 → 0.94, schnell 0.66 → 0.93 GenEval at about 18.6 samples | schnell as backbone | Not as a pair | The roughly 7× cheaper per-sample cost of schnell goes unremarked; we make the compute trade-off the object of study. |
-| PE-OPSD | arXiv Sep'26 | Folds a prompt enhancer into the generator via on-policy self-distillation; zero PE latency | Z-Image-Turbo, klein | Reports base and distilled with/without PE, but not as a transfer study | Weight-side, single prompt, needs weights. We are prompt-side, set-valued, black-box-capable and complementary (combined in E5). |
-| Prompt Expansion | CVPR'24 | Multiple expansions for diversity and aesthetics | No | No | Teacher-referenced coverage objective; student-specific; alignment preserved by checklist. |
-| CADS | ICLR'24 | Condition-embedding noise for diversity | — | — | Baseline; on klein it buys diversity at a quality cost. |
-| Yue et al. (RLVR pass@k) | NeurIPS'25 | RL sharpens LLMs: pass@1 ↑, pass@k ↓ | — | — | Analogous phenomenon for diffusion distillation, with a parametric model and a prompt-side remedy. |
-
-**Novelty statement.** To our knowledge, no prior work:
-
-- (a) compares a diffusion teacher with its distilled students on prompt-interface questions;
-- (b) models distillation as tempering of per-prompt success, or measures β;
-- (c) trains a student-specific, set-valued prompt adapter with the teacher as reference.
-
-All three are checked against targeted searches; see `notes/` in the scratchpad reports.
-
----
-
-## 7. Anticipated reviewer concerns and planned answers
-
-*Will be refined with the OpenReview mining results; see Appendix A.*
-
-| Concern | Answer built into the design |
+| Source | Ratio |
 |---|---|
-| "Prompt optimization is not new." | The contribution is the model (β), its validated consequences, and a student-specific set adapter. The test-time loop is a means. Baselines include the strongest prompt optimizers and rewriters. |
-| "Reward hacking: you optimize and evaluate with the same judge." | Different judge family for evaluation, plus the GenEval detector, a frontier pairwise judge and a human study. The teacher-precision term is a model-internal guard. Report HPSv3 and artifact metrics. |
-| "Test-time search kills the speed advantage of distillation." | DAPPER is amortized: one 1.7–4B LLM call, which *replaces* the 9–24B enhancer pipelines already run. All search results are wall-clock-matched, including LLM and verifier time. |
-| "Why not fix the student's weights (diversity-preserving DMD, LoRA)?" | Prompt-side, training-free for the generator, works for API/black-box students and composes with weight-side fixes. We include DP-DMD (diversity-preserving DMD) as a weight-side reference. |
-| "Only GenEval; GenEval is saturated." | GenEval-2 is the headline, plus DPG, T2I-CompBench++, OneIG, TIIF and a reasoning set. Official GenEval is reported for continuity. |
-| "The tempered model is too simple." | It is a falsifiable lens with independent estimates of β (E1 slope vs E3 slope). Where it fails (wording-dependent b), we report it as a finding. |
-| "Confounds: RL inside students, 512px Turbo, guidance differences." | Labelled. The SDXL sweep separates objective families. RL-distilled students are analysed separately. Resolution is matched where possible. |
-| "Diversity metrics are gameable." | Report teacher recall (coverage of the teacher's own samples), not just pairwise distance, alongside alignment. |
+| ERNIE PE, GenEval colors | 1.53 |
+| ERNIE PE, GenEval overall | 1.07 |
+| PE-OPSD PE, GenEval-2 | 1.34 |
+| PE-OPSD PE, GenEval | **0.85** |
+
+One of four goes the other way. Aggregate logits also differ from per-prompt logits (Jensen gap). We therefore expect a **modest** β, around 1.1–1.5, and plan statistical power for it (Section 3.4). The ERNIE PE raises Turbo's OneIG diversity by 80% (0.123 → 0.221), against 43% for its teacher (0.169 → 0.241). Prompt variation is a strong lever for students.
 
 ---
 
-## 8. Risks, go/no-go and alternative storylines
+## 2. The tempered-teacher model
 
-**Go/no-go pilot** (by Oct 23; SDXL family, 553 GenEval prompts × 16 seeds, about 15 GPU-h):
+### 2.1 Definitions
 
-- **Outcome A (expected):** β̂ ≥ 1.3 for Turbo, Lightning and DMD2, and ≈ 1 for LCM/TCD; ρ_student > ρ_teacher. The paper is as written.
-- **Outcome B:** β̂ ≈ 1, but the wording-dependent residual b(c) is large and rankings do *not* transfer. Pivot to **"Prompts Don't Distill"**: a transfer-gap paper. The headline becomes the teacher→student transfer matrix plus DAPPER as the fix. The code is unchanged.
-- **Outcome C:** β̂ > 1 but prompt mixtures do not restore diversity. The paper becomes analysis plus allocation rule (E1–E4), and DAPPER is reduced to single-prompt adaptation. That is weaker for CVPR, so consider ICCV'27 with more models.
+An *intent* I (e.g. "a purple wine glass and a black apple") can be expressed by many *wordings* c, and each wording is rendered with *seeds* z. The success rate q(c) is the probability over seeds that the image satisfies I's checklist. The checklist is always the *original* prompt's, never the rewritten one's.
 
-**Other risks:**
+### 2.2 Model
 
-- **Judge noise in β̂.** Use the errors-in-variables fit, check against the GenEval detector, and report bootstrap CIs.
-- **Compute.** About 300–450 GPU-h total (Section 9). If short, drop Qwen-Image-2.1 and video from the CVPR version.
-- **Recency.** FLUX 3 klein, Qwen-Image-2.1-Turbo and Lightning are 1–2 weeks old. Using them shows currency but risks immature tooling, so they are optional.
+  **logit q_S(c) = β · logit q_T(c) + b + σ·ε_c,  ε_c ~ N(0,1)**
+
+- **β is an effective temperature**, a phenomenological quantity rather than a derived one.
+  - β > 1: the student pushes the teacher's success rates toward 0 or 1 *in the teacher's order*.
+  - β < 1: it flattens them, e.g. a regression student blurring between outcomes.
+- **σ measures prompt-specific deviation** of the student from the teacher: the student *re-addresses* prompts. "Prompts don't distill" corresponds to large σ.
+- Outcomes are regions of the (β, σ) plane, not a binary pivot.
+
+**Why this form.** If the student were an exact mode-level tempering, π^S_k ∝ π_k^β, collapsing modes into success (G) and failure (F) gives exactly
+
+  logit q_S = β·logit q_T + (1−β)·[H_β(π|G) − H_β(π|F)],
+
+where H_β is the Rényi entropy within each group. Two consequences follow:
+
+- **(a) The offset depends on the prompt,** which motivates the random effect σ rather than a constant b.
+- **(b) "Failure is diverse, success is canonical."** When an intent has one canonical success mode and many failure modes, H(G) < H(F). With β > 1 the offset is then *positive*, so tempering *raises* pass@1 on templated prompts. This is a mechanism for students beating teachers at pass@1 on GenEval while losing reach. It is testable with atom-level outcomes.
+
+**Toy evidence** (`scripts/toy_tempering.py`, runs on CPU). Setup: a capacity-limited student (one Gaussian per condition) fitted to a bimodal teacher c·N(+d,1) + (1−c)·N(−d,1), where success is x > 0.
+
+| Mode separation d | Reverse-KL student (DMD-like) | Forward-KL student |
+|---|---|---|
+| 3 (separated) | logit slope 3.9; seed spread collapses to one mode (sd 1.0 vs 2.6) | slope 0.89; seed sd 2.6 |
+| ≤ 2 (overlapping) | slope ≤ 1.5 | — |
+| all | — | slope < 1 (flattening) |
+
+So mode-seeking students temper when semantic outcomes are well separated, while mode-covering students *flatten*. This refines v1's "β ≈ 1 for consistency models": consistency or regression students may show β ≤ 1 together with blur.
+
+### 2.3 Two predictions, one remedy
+
+- **(i) Seed contraction.** Re-seeding gains, pass@k − pass@1, shrink on prompts with intermediate q_T. Lost reach concentrates on prompts the teacher solves *sometimes*. This is an algebraic consequence of β > 1, so we report it as a consequence, not a separate claim.
+- **(ii) The wording axis gains relative to the seed axis.** Wording effects are amplified, Δlogit q_S ≈ β·Δlogit q_T, while seed effects contract. The decision "K seeds or K wordings?" can therefore **flip** between teacher and student.
+  - Caveat: the model also predicts a limit. If every wording of an intent sits below the student's threshold, rewording cannot help either. We report that population explicitly.
+- **Remedy:** sample a few intent-preserving wordings (Section 5).
+
+### 2.4 What would *not* be tempering: the null we must beat
+
+"Mode collapse" alone is the null: the student collapses onto an *arbitrary* mode, lowering diversity with β ≈ 1 and large σ. Tempering means collapse onto the teacher's *dominant* mode. We test this directly with a judge-free, mode-level statistic: student images are clustered jointly with teacher images in DINOv2 space, and we measure top-mode agreement against the arbitrary-collapse null (`dap.metrics.fit_mode_tempering`).
+
+**Guidance is the other null.** CFG tempers too. We fit each student against the teacher run at the student's baked-in guidance (w ∈ {5, 8, 12} for SDXL), and report "a 4-step DMD2 behaves like a w* teacher" when that is what we find.
+
+---
+
+## 3. Measurement protocol
+
+### 3.1 Estimator
+
+This is `dap.metrics.fit_tempering(model="re")`.
+
+- The teacher's per-prompt rate is latent: a posterior on a logit grid under an empirical-Bayes Beta prior. It is integrated out, so few seeds and rates near 0/1 do not attenuate β.
+- The student likelihood is binomial with a logit-normal random effect (σ), integrated by Gauss–Hermite quadrature.
+- Judge confusion (false-positive, false-negative) can differ between the teacher's and the student's images.
+- Binomial and beta-binomial fits are reported as brackets in the supplement.
+
+### 3.2 Why this estimator (simulations in the supplement; reproduced in `tests/`)
+
+| True mechanism | Naive logit slope | Binomial EIV | Beta-binomial EIV | **(β, σ) GLMM** |
+|---|---|---|---|---|
+| β = 4, σ = 0, n = 32 | 1.56 (attenuated) | 4.01 | — | ≈ 4 |
+| β = 1, σ = 1.5 (student = different model, not sharper) | — | **1.20** (false sharpening) | **0.69** (false flattening) | **1.02, σ̂ = 1.41** |
+| β = 1.5, σ = 1.5 | — | 1.80 | 1.10 | **1.53, σ̂ = 1.43** |
+| β = 4, judge FP/FN = 8%/12% on both models, uncorrected | — | 1.8 | — | ≈ 4 with ε corrected |
+| β = 1, judge noisier on teacher images, pooled ε | — | 1.50–1.54 | — | needs per-model ε, hence hand labels |
+
+Power: 300–553 prompts × 16 seeds detect β ≈ 1.2 (EIV 95% range 1.13–1.32).
+
+### 3.3 Controls (one row each in Table 1)
+
+| Control | Expected | Rules out |
+|---|---|---|
+| **Teacher self-split** (32 seeds split 16/16) | β ≈ 1, σ ≈ 0 | Estimator artifacts (`dap.metrics.self_split_control`) |
+| **CFG-matched teacher** (w ∈ {5, 8, 12}) | β > 1 rising with w | "It's just guidance". Each student is also fitted against the CFG-matched teacher |
+| **Non-distilled sibling** (same teacher, different solver/steps without distillation, e.g. DPM-Solver++ at 10 steps) | β ≈ 1, σ > 0 | "Any different sampler looks like this" |
+| **Consistency students** (LCM, TCD) | β ≤ 1, possibly with blur | Negative control for "mode-seeking tempers" |
+
+### 3.4 Judges and calibration
+
+- **Search and selection** (only inside DAPPER-SFT data generation): Qwen3-VL-8B.
+- **Evaluation:**
+  - the GenEval *detector* pipeline, which is judge-independent;
+  - Gemma-3-27B or Llama-4-class VLM, *not* Qwen-based (InternVL3.5 is built on Qwen3, so it is excluded as an "independent" judge);
+  - a frontier pairwise judge on subsets.
+- **Hand labels.** 400–600 teacher and student images, stratified by q-bin and by c ∈ {0, n}, labelled by two annotators. These give per-model confusion rates that the estimator ingests.
+- β is reported under each judge. Detector-vs-VLM agreement is in the supplement.
+
+---
+
+## 4. Experiments (MVP for CVPR)
+
+### 4.1 Models
+
+| Family | Teacher | Students | Role |
+|---|---|---|---|
+| **SDXL** (full) | SDXL-base, 30 steps, w = 5 | Turbo (ADD), Lightning-4 (progressive adversarial; plus 1/2/8 step sweep), DMD2-4, LCM-4, TCD-4, Hyper-4 | Objective sweep with the teacher fixed |
+| **FLUX.2-klein** (full) | klein-base-4B, 50 steps, CFG 4 | klein-4B, 4 steps | Clean vendor undistilled/distilled pair; DiT + LLM text encoder + flow; Apache-2.0 |
+| **Z-Image** (partial: E1 + Table 2) | Z-Image, 50 steps, at 768 px | Z-Image-Turbo (DMD + RL; labelled as RL-confounded) | Production student |
+
+Repo IDs and checkpoint filenames are verified in `configs/families.yaml`. SDXL-Turbo's native 512 px is labelled; we add SD2.1 → SD-Turbo as a resolution-matched ADD pair if time allows.
+
+### 4.2 E1: Do students temper their teachers?
+
+- **Prompts.** GenEval: 553 prompts, detector plus VLM, for SDXL. GenEval-2: 800 prompts for klein and Z-Image.
+- **Seeds.** 16 per student; 32 for teachers, so the self-split works.
+- **Fig. 2.** Binned E[q_S | q_T] per student with 95% bands, controls in grey, panels ordered by objective family.
+- **Table 1.** Per student:
+  - objective and steps;
+  - β̂ [CI], σ̂ and b̂, both vs the default teacher and vs the CFG-matched teacher;
+  - pass@1 and pass@16 (Δ vs teacher);
+  - lost reach and gained reach;
+  - seed DreamSim;
+  - top-mode agreement vs null;
+  - one row per control.
+
+### 4.3 E2: Seed or wording? (one grid per model)
+
+- **Grid.** 200 intents (SDXL) or 150 (klein) × 8 wordings × 8 seeds, on the teacher plus DMD2, Lightning, LCM and klein. The 8 wordings are:
+  - the original;
+  - 5 paraphrases;
+  - the teacher-built PE rewrite;
+  - a generic LLM rewrite.
+- **Fig. 3a.** Absolute seed-induced and wording-induced variation in DINOv2 and success space, teacher vs student. We report absolute V_seed and V_para, not only their ratio, because the ratio rises mechanically when V_seed falls (`scripts/variance.py`).
+- **Fig. 3b, the headline panel.** Best-of-K over seeds vs over wordings, K = 1…8, at **wall-clock including LLM time**, for teacher vs student.
+  - Prediction: on the teacher, seeds ≥ random wordings, replicating OPT2I's finding on SD2.1. On mode-seeking students the order flips. Consistency students sit in between.
+  - A feedback-driven evolution curve (`dap/evolve.py`, student-only fitness) is a dashed reference.
+- **Fig. 3c.** Amplification: per-rewrite Δlogit q_S vs Δlogit q_T, with official-PE rewrites highlighted.
+  - The slope, from Deming regression, is checked against β̂ from E1 as an independent estimate.
+  - Rank transfer (Spearman) and top-1 agreement of wordings come from the same grid (`scripts/amplification.py`, `scripts/portability.py`).
+- **Seed portability falls out of the same grid.** Does a seed mean the same image for teacher and student? We measure it by same-seed image coupling. Trajectory-preserving students should show coupling; DMD and adversarial students should not.
+- **Reconciling prior results** is stated as *consistent with*, not *resolved by*. One paragraph covers PRIS (FLUX-dev: prompt > seed) vs Noise Hypernetworks (SD-Turbo: best-of-N > MILS at about 10× lower wall-clock). We reproduce the Noise Hypernetworks comparison at equal wall-clock and explain it: a 95 s LLM loop vs one 0.2 s call, and binary vs continuous reward.
+
+### 4.4 E3: Remedy (Table 2)
+
+- **Setup.** 3 students (SDXL-DMD2, klein-4B, Z-Image-Turbo). Prompts: GenEval-2, DPG-hard (264) and a T2I-CompBench subset, plus held-out user prompts (Pick-a-Pic / DiffusionDB) against benchmark overfitting.
+- **Main condition:** K = 4 images. K = 1 is secondary.
+- **Implementation:** `scripts/remedy_eval.py`.
+
+**Rows:**
+
+| Side | Methods |
+|---|---|
+| Noise | i.i.d. seeds; pink-noise latents; CADS; **hybrid teacher-first-step** (Gandikota & Bau; +1 teacher NFE); one noise-optimization diversity method (MoNO / Harrington / CNO, whichever has code) |
+| Prompt | **teacher-built/official PE** (FLUX.2 upsampler, Z-Image PE, generic enhancer for SDXL), and sampled K times at temperature 1 as the "cheap set" baseline; generic "K diverse expansions" (Prompt-Expansion-style control); random paraphrases |
+| Ours | **Reword-K** (zero-shot); **DAPPER-SFT** if it passes Gate 3 |
+| Reference | teacher with K seeds at its own cost; a Reword-K + pink-noise combination row |
+
+**Columns:**
+
+- **Alignment:** mean success and pass@K under held-out judges and the detector.
+- **Diversity:** Vendi and DreamSim.
+- **Teacher coverage:** coverage of the *success-filtered* teacher samples for the *original* prompt, computed in CLIP space (not the DINOv2 space used for selection), on held-out teacher seeds.
+- **Attribute-injection rate:** does the LLM invent content?
+- **HPSv3**, as a quality guard.
+- **End-to-end latency.**
+
+**Fig. 4.** K = 4 grids: 3 prompts × 4 methods, prompt IDs drawn at random and stated.
+
+**Human 2AFC.** About 120 prompts × 3 comparisons × 5 raters. Questions: "faithful to the prompt?" and "more varied while faithful?". Protocol, agreement (Krippendorff's α) and CIs are reported, with the protocol pre-registered before DAPPER is evaluated.
+
+### 4.5 Ablations (Table 3, small)
+
+- Reword-K vs generic expansion vs paraphrase: is "intent-preserving + jointly diverse" the active ingredient?
+- Joint K-list decoding vs K i.i.d. samples.
+- K ∈ {2, 4, 8}.
+- Zero-shot 4B vs SFT 1.7B.
+- DAPPER-SFT selection on/off; teacher reference on/off.
+- Search-judge swap.
+
+---
+
+## 5. Method
+
+### 5.1 Reword-K (main)
+
+- One call to a ≤ 4B instruct LLM (Qwen3-4B-Instruct-2507) returns a JSON list of K rewordings, written *jointly* so they differ from each other (`dap/reword.py`).
+- Allowed edits: order of mention, sentence structure, explicit attribute binding, viewpoint and composition phrasing.
+- **Forbidden:** new objects, attributes or style words.
+- Each rewording gets one seed.
+- **No search judge and no teacher at inference.**
+- **Cost:** about 0.2 s on one H100 (about 150 output tokens for K = 4). That is below one student image and 10–100× cheaper than shipped enhancers.
+
+### 5.2 DAPPER-SFT (optional; the distillation-specific variant)
+
+**Offline, per student:**
+
+1. Run student-in-the-loop reflective evolution (`dap/evolve.py`) on about 1.5–5k training prompts. Fitness is the original-intent checklist plus λ·teacher precision.
+2. Use facility-location set selection over *teacher* samples to pick K successful, complementary wordings per prompt.
+3. Run SFT of Qwen3-1.7B on (prompt → K-set).
+
+**The teacher is used only offline**, as a free reference for training data. At deployment DAPPER-SFT costs the same as Reword-K. Teacher coverage at evaluation uses held-out teacher seeds and a different feature space from selection, which avoids circularity. If DAPPER-SFT does not beat Reword-K by Nov 6, it becomes an ablation.
+
+**Explicitly out of scope** (ICCV or journal extension): GRPO with leave-one-out coverage reward, student-conditioned adapters and transfer matrices, video. Why: APE (arXiv 2606.00204) already trains 0.6–4B enhancers with GRPO against Z-Image-Turbo, and SetPO (arXiv 2602.01062) already uses leave-one-out set credit. An RL adapter would not be novel here.
+
+---
+
+## 6. Related work and novelty (one-line diffs)
+
+| Work | What it shows | Our diff |
+|---|---|---|
+| Gandikota & Bau, WACV'26; DP-DMD; Phased DMD; Harrington et al. CVPR'26; MoNO; CNO ICLR'26 | Students lose seed diversity (step 1, low frequency); noise-side and training-side fixes | We compare students with their *own teacher per prompt*, distinguish teacher-ordered tempering from arbitrary collapse and CFG, and show where diversity *went* (the wording axis). Their fixes are our baselines. |
+| GAD, ICML'26; Decomposable Probe, arXiv 2607.03256 | Students are less sensitive to noise; perturbation selectivity across 23 models | Different measurement (perturbation response). We measure per-prompt success, reachability and the seed/wording asymmetry. |
+| PRIS CVPR'26; ReflectionFlow ICCV'25; Noise Hypernetworks NeurIPS'25; OPT2I TMLR'24; GenPilot; RATTPO; RAISE | Seed vs prompt test-time scaling, with conflicting conclusions | We measure the seed/wording asymmetry *per teacher–student pair*. The flip is a distillation effect, consistent with both camps; we do not claim to resolve them. |
+| PromptEnhancer CVPR'26; POET ECCV'26; PE-OPSD; APE; FaithRewriter; Prompt Expansion ACL'24; PAG CVPR'25 | Trained rewriters and enhancers; enhancer folded into weights; diverse expansions | Our remedy is a *consequence* of the analysis, zero-shot first. The student-specific part is ablated against generic expansion and the official PE, at equal wall-clock. |
+| Yue et al. NeurIPS'25; Huang et al. ICLR'25 (sharpening mechanism); Karan & Du arXiv 2510.14901 (power sampling); SetPO | RL and self-improvement sharpen LLMs: pass@1 ↑, pass@k ↓ | Cross-domain analogue for diffusion distillation, with a per-prompt estimator, controls and a prompt-side remedy. |
+| Starodubcev et al. CVPR'24; Diversity-Rewarded CFG Distillation, ICLR'25 | Students beat teachers on many samples; diversity-aware distillation | Explained by the Rényi offset ("failure is diverse"); weight-side vs our prompt-side. |
+| Bradley & Nakkiran; Chidambaram et al. (what CFG does) | CFG does not sample p·p(c\|x)^w | Why we control for CFG empirically rather than assuming it tempers. |
+
+**Novelty statement**, checked by four literature sweeps (about 200 papers) and three simulated reviews. We found no prior work that:
+
+- (a) compares diffusion teachers with their own students on per-prompt success and reachability;
+- (b) separates teacher-ordered tempering from arbitrary collapse and CFG with controls;
+- (c) measures the seed/wording asymmetry as a distillation effect and acts on it at inference.
+
+---
+
+## 7. Reviewer-attack checklist, mapped to design
+
+Sources: 3 simulated reviews plus 107 mined OpenReview papers and 429 reviews.
+
+| Attack (precedent) | Pre-emption in the submission |
+|---|---|
+| "Just LLM rewriting" (9/16 prompt-opt papers; the #1 killer) | Contribution = new axis (teacher vs own student). The remedy is deliberately simple and derived from the analysis; it is ablated against generic expansion and the official PE. |
+| "Restatement of mode collapse / it's CFG" | Teacher-ordered test vs arbitrary-collapse null; CFG-matched teacher; consistency students as negative control; the practical flip in Fig. 3b. |
+| "β depends on estimator/judge" | (β, σ) GLMM; brackets; self-split and sibling controls; per-model judge confusion from hand labels; detector replication; judge-free mode test. |
+| "Optimized and evaluated with the same judge" (6/16; 5/14) | The search judge is used only for DAPPER data. Evaluation uses the detector, a non-Qwen VLM, a frontier pairwise judge and humans. Teacher coverage uses held-out seeds and a different feature space. |
+| "Best-of-N / random baseline at matched compute" (15/26) | Seeds, pink, CADS, hybrid first step and noise optimization at **equal wall-clock including LLM time**; random paraphrases; teacher at equal wall-clock. |
+| "Diversity comes from the LLM inventing content" | Attribute-injection rate; teacher coverage restricted to successful teacher samples; original-intent checklist. |
+| "Only distilled models / dead end" (ReNO critique) | The teacher is a first-class arm everywhere; step sweep (Lightning 1/2/4/8); deployment numbers (latency of shipped PEs). |
+| "Noise Hypernetworks found best-of-N > prompt optimization" | Reproduced at equal wall-clock and explained; we show where each wins. |
+| "Single-seed fitness unreliable" | Fitness only in DAPPER data generation, with 2 seeds and common random numbers; seed-variance measured per model in E2. |
+| "Human study too small" (7/16) | Pre-registered 2AFC: 5 raters, agreement, CIs, intent-fidelity question. |
+| "GenEval overfitting" | GenEval-2, DPG-hard, T2I-CompBench and real user prompts. |
+| "Clarity" (the #1 accept/reject separator) | One takeaway, 7 floats, three contributions. Everything else goes to the supplement. |
+
+---
+
+## 8. Gates, outcomes and fallbacks
+
+| Gate | Date | Criterion | If it fails |
+|---|---|---|---|
+| **G1** | Oct 24 | (a) GLMM β̂ CI excludes 1 for ≥ 2 of {Turbo, Lightning, DMD2} **vs the CFG-matched teacher**, with self-split β̂ ≈ 1; (b) on students, best-of-K(wordings) − best-of-K(seeds) is larger than on the teacher | (b) only: submit as empirical "Reword, Don't Reseed" with β in the supplement. Neither: ICCV'27 |
+| **G2** | Nov 3 | Reword-K beats i.i.d. seeds and the official PE on teacher coverage and diversity, at matched alignment and wall-clock, on ≥ 2 of 3 students | Submit only if E1/E2 are very strong; otherwise ICCV |
+| **G3** | Nov 6 | DAPPER-SFT > Reword-K | DAPPER becomes an ablation |
+
+**Pre-registered readings of the (β, σ) plane:**
+
+- **β > 1, σ small:** tempered teachers. This is the main story.
+- **β ≈ 1, σ large:** "prompts don't distill". Students re-address prompts, and student-specific rewording matters even more. The paper retitles; the code is unchanged.
+- **β < 1 with blur:** flattening, as expected for regression students.
+
+**Breadth risk.** Modern students (klein, Z-Image) may temper more than SDXL ones. If so, report it: "modern students temper more".
 
 ---
 
 ## 9. Compute and timeline
 
-| Block | GPU-h (H100) | Notes |
-|---|---|---|
-| E1 SDXL sweep (teacher + 8 students, 553 + 400 prompts × 16 seeds) | about 20 | Teacher dominates (60 NFE/image); EIV estimator makes n = 16 sufficient |
-| E1 vendor pairs (4 teachers at 50–100 NFE, n = 12, 400 prompts) | about 60 | Largest single cost |
-| E2 + E3 | about 30 | |
-| E4 anytime curves (6 models × 300 prompts, budgets to 256 student images) | about 60 | Plus vLLM judge |
-| DAPPER data engine (10k prompts × about 12 candidates × 3 students) | about 40 | Plus teacher refs (4/prompt) about 30 |
-| DAPPER SFT + GRPO (3 students) | about 60 | |
-| Eval + ablations + human-study images | about 50 | |
-| **Total** | **about 350** | About 2 days on 8 × H100 per pass; plan for 2 passes |
+Compute is about 250 H100-GPU-h including a 35% buffer, roughly $500–750, plus about $400–600 for Prolific. Two GPUs from Oct 19 to Nov 8 are enough, with a burst to 4 for E5 on Nov 1–5. The binding constraint is author time. All runs save images in the GenEval layout and are judged asynchronously.
 
-**Calendar to CVPR 2027:**
+| Date | Work |
+|---|---|
+| **Oct 17–18** | Create OpenReview profiles now (moderation can take 2 weeks). Rent the pod. Download SDXL students, the klein pair, Z-Image, Qwen3-VL-8B, the non-Qwen eval VLM and Qwen3-4B. Run a GPU smoke test of every variant and measure latency. Install the GenEval detector. Resolve the `verify: true` config entries. |
+| Oct 19–22 | E1 on SDXL: teacher 32 seeds, students 16, controls. Judge-calibration hand labels. E2 grid on SDXL. Draft the introduction. |
+| **Oct 23–24** | **G1** |
+| Oct 25–31 | E1 and E2 on klein; E1 on Z-Image. Reword-K pilot (template, K). DAPPER-SFT data engine in the background. Write §2–3. |
+| Nov 1–3 | E3 full (Table 2) at equal wall-clock; SFT. **G2** |
+| Nov 4–6 | Human 2AFC; ablations; detector checks. **G3** |
+| Nov 7–8 | Freeze; figures. |
+| **Nov 10** | **Register** |
+| Nov 9–15 | Writing; adversarial self-review against Section 7 |
+| **Nov 16** | **Submit** |
+| Nov 17–23 | Supplement and compute report |
 
-- **Oct 18–23:** pilot E1/E2 on SDXL → **go/no-go**. Create OpenReview profiles now; moderation takes up to 2 weeks.
-- **Oct 24–31:** full E1–E3 on SDXL plus 2 vendor pairs. Start the DAPPER data engine.
-- **Nov 1–7:** DAPPER SFT/GRPO; E4; E5. Launch the human study (Prolific) by Nov 5.
-- **Nov 8–10:** E6 and ablations; **register paper Nov 10**.
-- **Nov 11–16:** writing; figures; **submit Nov 16**.
-- **Nov 17–23:** supplementary (video, extra models, compute reporting form).
-
-**Fallback:** ICCV 2027 (≈ early March) with full video and Qwen-Image sweeps.
+**Fallback: ICCV 2027** (around Mar 5–8). CVPR decisions (Feb 25) come before it, so CVPR reviews double as a free review round.
 
 ---
 
 ## 10. Self-assessment against the brief
 
-| Criterion | Assessment |
+| Criterion | Status |
 |---|---|
-| Simple? | One sentence: "distillation is sharpening, so a student's diversity lives in the prompt, not the seed." One parameter, β. One method: a set-valued prompt adapter. |
-| Broad and impactful? | Applies to every distilled image and video model and every production enhancer. Gives practitioners a rule for test-time compute and a drop-in enhancer replacement. Gives distillation researchers a new diagnostic (β, pass@k) to report next to FID and GenEval. |
-| Experiments relevant? | Teacher-vs-own-student comparisons nobody has run. Compute-matched with wall-clock. Held-out judges plus human study. Covers the dense-prompt and diversity regimes where students actually lose. |
-| Uses recent advances? | Qwen3-VL judge, GEPA-style reflective evolution, GenEval-2 and OneIG, GRPO, models released in the last 6 weeks, MMRB2 judge-reliability findings. |
-| Biggest weakness to watch | P4/P5 must hold across models for the "one number" story. The pilot decides. |
+| **Simple?** | One sentence ("students decide their teacher's coin flips: reword, don't reseed"), one law (β, σ), one cheap remedy. |
+| **Broad?** | Every distilled image model, and every product that shows K images per prompt. A reusable diagnostic: we will release a one-command β/σ/pass@k script and a public table for common students, as a citation engine for distillation papers. |
+| **Experiments relevant?** | Teacher vs own student (new). Controls for the two obvious confounds. Equal-wall-clock baselines from both the noise and prompt sides. Held-out judges, detector and human. |
+| **Recent advances?** | FLUX.2-klein and Z-Image(-Turbo) (2026); Qwen3-VL judges; GenEval-2; PE-OPSD/APE as context; LLM sharpening literature (2025–26). |
+| **Expected outcome** | The simulated AC estimates 4 (Borderline Accept) if G1–G2 pass, and 5 if the flip is clean on all 3 families and the human study is in. |
 
 ---
 
-## Appendix A — Reviewer-criticism checklist from OpenReview (to be filled from `openreview_mining.md`)
+## Appendix A: v1 → v2 change log (responses to round-1 reviews)
 
-## Appendix B — Key references
+| Round-1 criticism | v2 change |
+|---|---|
+| R1/AC: binomial β biased by prompt-specific student errors (1.20 false sharpening; beta-binomial 0.69) | (β, σ) logit-normal GLMM is now the default (`fit_tempering(model="re")`); brackets kept. |
+| R1: CFG and RL confound distillation | CFG-matched teacher control; RL students analysed separately and labelled. |
+| R1: judge noise differs between models | Per-model judge confusion (`eps`, `eps_S`) from hand labels; detector replication; judge-free top-mode agreement. |
+| R1/R2: P2 and P5 are tautological consequences | Recast as consequences of one law. Seed-axis claims are algebra. The non-trivial claim is the *flip* between teacher and student. |
+| R2: "β reconciles PRIS vs Noise Hypernetworks" overclaims | Dropped; "consistent with" plus an equal-wall-clock reproduction. |
+| R1/R2: DAPPER is an add-on and not novel (APE, SetPO, PAG) | GRPO dropped. Zero-shot Reword-K is the main remedy; DAPPER-SFT is optional and offline-teacher only. |
+| R2: teacher precision/coverage circular; eval judge shares the Qwen base | Coverage on held-out teacher seeds, success-filtered, in a different feature space; non-Qwen eval VLM. |
+| R2: search budgeted only by NFE | `search_scaling.py --axis seconds` counts generation, judge and LLM time; online paraphrasing counted. |
+| AC: scope is three papers; not feasible in 30 days | Two full families and one partial; one grid instead of three experiments; video and new families cut. |
+| AC: "sharpening" in a vision title reads as image sharpening | Retitled "tempered teachers". |
+| R1: motivating numbers oversold | Logit ratios reported, including the one against us (0.85). |
+| R1/R2: citation errors | Decoupled-DMD is arXiv 2511.22677; Prompt Expansion is ACL'24; missing references added. |
 
-- Gandikota & Bau, *Distilling Diversity and Control in Diffusion Models*, WACV 2026. arXiv:2503.10637
-- Kim et al., *PRIS: Rethinking Prompt Design for Inference-time Scaling in Text-to-Visual Generation*, CVPR 2026. arXiv:2512.03534
-- Eyring et al., *ReNO*, NeurIPS 2024. arXiv:2406.04312
-- *Noise Hypernetworks*, NeurIPS 2025.
-- Harrington et al., *It's Never Too Late: Noise Optimization for Collapse Recovery*, CVPR 2026. arXiv:2601.00090
-- Zhuo et al., *ReflectionFlow*, ICCV 2025. arXiv:2504.16080
-- Chen et al., *POET*, ECCV 2026. arXiv:2510.12041
-- Mañas et al., *OPT2I*, TMLR 2024. arXiv:2403.17804
-- Ye et al., *GenPilot*, EMNLP Findings 2025. arXiv:2510.07217
-- Kim et al., *RATTPO*, arXiv:2506.16853
-- Jiang et al., *RAISE*, CVPR 2026. arXiv:2603.00483
-- *PromptEnhancer*, CVPR 2026. *PromptRL*, ICML 2026.
-- Datta et al., *Prompt Expansion for Adaptive Text-to-Image Generation*, CVPR 2024.
-- Sadat et al., *CADS*, ICLR 2024. arXiv:2310.17347
-- Yin et al., *DMD*, CVPR 2024; *DMD2*, NeurIPS 2024.
-- Sauer et al., *ADD* (SDXL-Turbo), ECCV 2024; *LADD*, SIGGRAPH Asia 2024.
-- Lin et al., *SDXL-Lightning*, 2024. Luo et al., *LCM*, 2023. Ren et al., *Hyper-SD*, NeurIPS 2024.
-- *DP-DMD*, arXiv:2602.03139. *Phased DMD*, arXiv:2510.27684. *Decoupled-DMD / DMDR* (Z-Image-Turbo), arXiv:2511.22699 / 2511.13649.
-- Agrawal et al., *GEPA*, ICLR 2026 (Oral).
-- *Multimodal RewardBench 2*, CVPR 2026. arXiv:2512.16899
-- *GenEval 2* (Dec 2025). *OneIG-Bench*, NeurIPS 2025 D&B. arXiv:2506.07977
-- Yue et al., *Does Reinforcement Learning Really Incentivize Reasoning Capacity in LLMs Beyond the Base Model?*, NeurIPS 2025.
-- ERNIE-Image / ERNIE-Image-Turbo model cards (PE on/off tables), huggingface.co/baidu.
+## Appendix B: Code map (`research/distillation-aware-prompting/`)
+
+| Paper element | Code |
+|---|---|
+| E1 (β, σ, pass@k, controls) | `scripts/sharpening.py` (with `--teacher-cfgs`, `--judge-eps[-student]`); `dap/metrics.py::fit_tempering`, `self_split_control`, `fit_mode_tempering`, `joint_mode_counts` |
+| E2 grid | `scripts/variance.py` → `scripts/portability.py`, `scripts/amplification.py` |
+| Fig. 3b curves | `scripts/search_scaling.py --axis seconds` |
+| E3 / Table 2 | `scripts/remedy_eval.py`, `dap/reword.py` |
+| DAPPER-SFT data | `dap/evolve.py` (`coverage_subset`, teacher precision) |
+| Toy | `scripts/toy_tempering.py` |
+| Tests | `pytest -q tests` (24 tests, CPU) |
+
+## Appendix C: Key references (verified on arXiv / model cards)
+
+- Gandikota & Bau, *Distilling Diversity and Control in Diffusion Models*, WACV'26. arXiv:2503.10637
+- Liu et al., *Decoupled DMD: CFG Augmentation as the Spear, Distribution Matching as the Shield*. arXiv:2511.22677
+- Jiang et al., *Distribution Matching Distillation Meets Reinforcement Learning* (DMDR). arXiv:2511.13649
+- *1.x-Distill*. arXiv:2604.04018. *DP-DMD*. arXiv:2602.03139. *Phased DMD*. arXiv:2510.27684
+- Harrington et al., *It's Never Too Late: Noise Optimization for Collapse Recovery*, CVPR'26. arXiv:2601.00090
+- *MoNO*. arXiv:2607.23937. *DOG-Trim / Rethinking Test Time Scaling for Flow-Matching Generative Models*. arXiv:2511.22242
+- Mu, *A Decomposable Probe for Few-Step Diffusion Models*. arXiv:2607.03256
+- Kim et al., *PRIS*, CVPR'26. arXiv:2512.03534. Zhuo et al., *ReflectionFlow*, ICCV'25. arXiv:2504.16080. *Noise Hypernetworks*, NeurIPS'25
+- Mañas et al., *OPT2I*, TMLR'24. arXiv:2403.17804. *RATTPO*, arXiv:2506.16853. *RAISE*, CVPR'26. arXiv:2603.00483. *GenPilot*, EMNLP-F'25. arXiv:2510.07217
+- *PE-OPSD*. arXiv:2609.36638. Huang et al., *APE*. arXiv:2606.00204. Chen et al., *POET*, ECCV'26. arXiv:2510.12041. *PromptEnhancer*, CVPR'26
+- Datta et al., *Prompt Expansion for Adaptive Text-to-Image Generation*, ACL'24
+- Yue et al., *Does RL Really Incentivize Reasoning Capacity in LLMs Beyond the Base Model?*, NeurIPS'25. Huang et al., *Self-Improvement in Language Models: The Sharpening Mechanism*. arXiv:2412.01951. Karan & Du, *Reasoning with Sampling*. arXiv:2510.14901. *SetPO*. arXiv:2602.01062
+- Starodubcev et al., *Your Student is Better Than Expected*, CVPR'24. arXiv:2312.10835. Cideron et al., *Diversity-Rewarded CFG Distillation*. arXiv:2410.06084
+- Sadat et al., *CADS*, ICLR'24. Yin et al., *DMD* (CVPR'24), *DMD2* (NeurIPS'24). Sauer et al., *ADD* / *LADD*. Lin et al., *SDXL-Lightning*. Luo et al., *LCM*. Ren et al., *Hyper-SD*
+- ERNIE-Image(-Turbo) model cards (PE on/off tables), huggingface.co/baidu; Z-Image(-Turbo), FLUX.2-klein model cards
