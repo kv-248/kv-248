@@ -79,3 +79,31 @@ def test_amplification_slope():
     vT, vS = np.full(2000, 0.05), np.full(2000, 0.2)
     est = amplification_slope(dT + rng.normal(0, 0.05 ** 0.5, 2000), dS + rng.normal(0, 0.2 ** 0.5, 2000), vT, vS)
     assert abs(est["slope"] - 2.0) < 0.1, est
+
+
+def test_fit_tempering_judge_noise_correction():
+    from scipy.special import expit, logit
+
+    from dap.metrics import fit_tempering
+
+    rng = np.random.default_rng(3)
+    e0, e1 = 0.08, 0.12
+    qT = rng.beta(0.8, 0.8, size=800)
+    qS = expit(3.0 * logit(np.clip(qT, 1e-4, 1 - 1e-4)))
+    cT = rng.binomial(16, e0 + (1 - e0 - e1) * qT)
+    cS = rng.binomial(16, e0 + (1 - e0 - e1) * qS)
+    naive = fit_tempering(cT, 16, cS, 16)["beta"]
+    corrected = fit_tempering(cT, 16, cS, 16, eps=(e0, e1))["beta"]
+    assert abs(corrected - 3.0) < 0.6 and abs(corrected - 3.0) < abs(naive - 3.0), (naive, corrected)
+
+
+def test_predict_scaling_flips_axis_with_beta():
+    from dap.metrics import predict_scaling
+
+    rng = np.random.default_rng(4)
+    cT = rng.binomial(16, rng.beta(0.8, 0.8, size=200))
+    pred = predict_scaling(cT, 16, beta=4.0, b=0.0, sigma_wording=1.0, budgets=[1, 8])
+    t, s = pred["teacher"], pred["student"]
+    # seed search helps the teacher more than the sharpened student; prompt search keeps working for the student
+    assert t["seed"][8] - t["seed"][1] > s["seed"][8] - s["seed"][1]
+    assert s["prompt"][8] - s["prompt"][1] > s["seed"][8] - s["seed"][1]

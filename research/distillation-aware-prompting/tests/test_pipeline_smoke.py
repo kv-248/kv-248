@@ -51,9 +51,9 @@ def _run(script, *args):
 def test_sharpening_script(tiny_config, geneval_file, tmp_path):
     out = _run("sharpening.py", "--family", "tiny", "--config", tiny_config, "--geneval-meta", geneval_file,
                "--n-seeds", "4", "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path), "--save-images",
-               "--n-boot", "5")
+               "--n-boot", "5", "--teacher-cfgs", "9")
     summary = json.loads((tmp_path / "summary.json").read_text())
-    assert set(summary) == {"tiny-teacher", "tiny-student"}
+    assert set(summary) == {"tiny-teacher", "tiny-student", "tiny-teacher-cfg9"}
     assert "sharpening_vs_teacher" in summary["tiny-student"]
     assert (tmp_path / "images" / "tiny-student" / "00000" / "samples" / "0003.png").exists()
     assert "tiny-student" in out

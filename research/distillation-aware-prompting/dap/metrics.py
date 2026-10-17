@@ -104,59 +104,112 @@ def mean_pairwise_distance(emb: np.ndarray) -> float:
 
 # ---- tempered-mixture model: logit q_S = beta * logit q_T + b -------------------------
 
-def _fit_beta_binomial(c: np.ndarray, n: int) -> tuple[float, float]:
-    """Empirical-Bayes Beta(a, b) prior for per-prompt success rates (beta-binomial MLE)."""
+_U = np.linspace(-10.0, 10.0, 241)  # logit grid for latent success rates
+
+
+def _log_binom_lik(c, n, m):
+    """log Binomial(c | n, m) for prompts (rows) x grid nodes (cols)."""
+    from scipy.special import gammaln
+
+    c = np.asarray(c, float)[:, None]
+    m = np.clip(m, 1e-12, 1 - 1e-12)[None, :] if np.ndim(m) == 1 else np.clip(m, 1e-12, 1 - 1e-12)
+    return gammaln(n + 1) - gammaln(c + 1) - gammaln(n - c + 1) + c * np.log(m) + (n - c) * np.log1p(-m)
+
+
+def teacher_posterior(cT, nT: int, eps: tuple[float, float] = (0.0, 0.0)) -> tuple[np.ndarray, list]:
+    """Posterior over each prompt's latent teacher logit u = logit q_T on the grid `_U`.
+
+    Empirical-Bayes Beta(a, b) prior on q_T (a logistic-beta density in u), fitted by marginal
+    likelihood. `eps = (false-positive, false-negative)` rates of the judge: measured success
+    probability is e0 + (1 - e0 - e1) q, so judge errors are not mistaken for (un)sharpening.
+    """
     from scipy.optimize import minimize
-    from scipy.special import betaln
+    from scipy.special import betaln, expit, logsumexp
+
+    e0, e1 = eps
+    q = expit(_U)
+    ll = _log_binom_lik(cT, nT, e0 + (1 - e0 - e1) * q)
+    du = _U[1] - _U[0]
+
+    def log_prior(a, b):
+        return a * np.log(q) + b * np.log1p(-q) - betaln(a, b) + np.log(du)
 
     def nll(x):
         a, b = np.exp(x)
-        return -np.sum(betaln(c + a, n - c + b) - betaln(a, b))
+        return -np.sum(logsumexp(ll + log_prior(a, b)[None, :], axis=1))
 
-    res = minimize(nll, x0=np.log([1.0, 1.0]), method="Nelder-Mead")
-    return tuple(np.exp(res.x))
+    a, b = np.exp(minimize(nll, x0=[0.0, 0.0], method="Nelder-Mead").x)
+    lp = ll + log_prior(a, b)[None, :]
+    return np.exp(lp - logsumexp(lp, axis=1, keepdims=True)), [float(a), float(b)]
 
 
-def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int, n_nodes: int = 64) -> dict:
-    """Errors-in-variables MLE of the sharpening exponent.
+def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
+                  eps: tuple[float, float] = (0.0, 0.0)) -> dict:
+    """Errors-in-variables MLE of the sharpening exponent beta (and offset b) in
+    logit q_S = beta * logit q_T + b.
 
-    The teacher's per-prompt rate q_T is latent: posterior Beta(a0 + cT, b0 + nT - cT) under an
-    empirical-Bayes prior. Student successes cS ~ Binomial(nS, sigmoid(beta * logit q_T + b)).
-    The latent q_T is integrated out by Gauss-Legendre quadrature, so prompts with few seeds
-    or rates near 0/1 do not bias beta the way a regression on smoothed logits does.
+    The teacher's per-prompt rate is latent (posterior on a logit grid, see `teacher_posterior`)
+    and integrated out, so prompts with few seeds or rates near 0/1 do not attenuate beta the
+    way a regression on smoothed logits does. Optional judge confusion `eps` is applied to both
+    teacher and student measurements.
     """
     from scipy.optimize import minimize
-    from scipy.special import expit, gammaln
-    from scipy.stats import beta as beta_dist
+    from scipy.special import expit, logsumexp
 
-    cT, cS = np.asarray(cT), np.asarray(cS)
-    a0, b0 = _fit_beta_binomial(cT, nT)
-    x, w = np.polynomial.legendre.leggauss(n_nodes)
-    q = 0.5 * (x + 1) * (1 - 2e-6) + 1e-6  # nodes in (0, 1)
-    post = beta_dist.pdf(q[None, :], (a0 + cT)[:, None], (b0 + nT - cT)[:, None]) * (0.5 * w)[None, :]
-    post /= post.sum(1, keepdims=True)
-    lq = np.log(q) - np.log1p(-q)
-    log_binom = gammaln(nS + 1) - gammaln(cS + 1) - gammaln(nS - cS + 1)
+    e0, e1 = eps
+    cS = np.asarray(cS)
+    post, prior = teacher_posterior(cT, nT, eps)
+    log_post = np.log(post + 1e-300)
 
     def nll(theta):
         b1, b2 = theta
-        p = np.clip(expit(b1 * lq[None, :] + b2), 1e-12, 1 - 1e-12)
-        lik = np.exp(log_binom[:, None] + cS[:, None] * np.log(p) + (nS - cS)[:, None] * np.log1p(-p))
-        return -np.sum(np.log((post * lik).sum(1) + 1e-300))
+        m = e0 + (1 - e0 - e1) * expit(b1 * _U + b2)
+        return -np.sum(logsumexp(log_post + _log_binom_lik(cS, nS, m), axis=1))
 
     res = minimize(nll, x0=[1.0, 0.0], method="Nelder-Mead", options={"xatol": 1e-4, "fatol": 1e-6})
-    return {"beta": float(res.x[0]), "b": float(res.x[1]), "nll": float(res.fun), "prior": [float(a0), float(b0)]}
+    return {"beta": float(res.x[0]), "b": float(res.x[1]), "nll": float(res.fun), "prior": prior,
+            "eps": [float(e0), float(e1)]}
 
 
-def bootstrap_tempering(cT, nT, cS, nS, n_boot: int = 200, seed: int = 0) -> dict:
+def predict_scaling(cT, nT: int, beta: float, b: float, sigma_wording: float, budgets: list[int],
+                    eps: tuple[float, float] = (0.0, 0.0), n_mc: int = 256, seed: int = 0) -> dict:
+    """Predict a student's best-of-N success curves from TEACHER measurements plus (beta, b).
+
+    sigma_wording: s.d. of wording effects in teacher logit space (from paraphrase data on the
+    teacher, sampling noise removed). Seed axis: P(any success in N seeds of the original
+    prompt). Prompt axis: P(any success over N random paraphrases, one seed each), i.e. a
+    no-feedback lower bound for prompt search. Returns teacher (beta=1, b=0) and student
+    curves, so the predicted crossover can be compared with measured anytime curves.
+    """
+    from scipy.special import expit
+
+    rng = np.random.default_rng(seed)
+    post, _ = teacher_posterior(cT, nT, eps)
+    u = np.array([rng.choice(_U, size=n_mc, p=row) for row in post])  # [P, n_mc] samples of logit q_T
+    out = {}
+    for name, (bb, b0) in {"teacher": (1.0, 0.0), "student": (beta, b)}.items():
+        p_seed = expit(bb * u + b0)
+        seed_curve, prompt_curve = [], []
+        for N in budgets:
+            seed_curve.append(float(np.mean(1 - (1 - p_seed) ** N)))
+            d = rng.normal(0, sigma_wording, size=u.shape + (N,))
+            d[..., 0] = 0.0  # the original wording is always among the candidates
+            p_w = expit(bb * (u[..., None] + d) + b0)
+            prompt_curve.append(float(np.mean(1 - np.prod(1 - p_w, axis=-1))))
+        out[name] = {"seed": dict(zip(budgets, seed_curve)), "prompt": dict(zip(budgets, prompt_curve))}
+    return out
+
+
+def bootstrap_tempering(cT, nT, cS, nS, n_boot: int = 200, seed: int = 0,
+                        eps: tuple[float, float] = (0.0, 0.0)) -> dict:
     """Point estimate plus percentile CI over prompts."""
     rng = np.random.default_rng(seed)
     cT, cS = np.asarray(cT), np.asarray(cS)
-    est = fit_tempering(cT, nT, cS, nS)
+    est = fit_tempering(cT, nT, cS, nS, eps=eps)
     boots = []
     for _ in range(n_boot):
         idx = rng.integers(0, len(cT), len(cT))
-        boots.append(fit_tempering(cT[idx], nT, cS[idx], nS)["beta"])
+        boots.append(fit_tempering(cT[idx], nT, cS[idx], nS, eps=eps)["beta"])
     lo, hi = np.percentile(boots, [2.5, 97.5])
     return {**est, "beta_ci": [float(lo), float(hi)]}
 

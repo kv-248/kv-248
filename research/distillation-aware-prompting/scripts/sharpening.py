@@ -10,6 +10,7 @@ student-vs-teacher sharpening statistics (logit slope, lost reachability).
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import gc
 import json
 import sys
@@ -80,6 +81,10 @@ def main():
     ap.add_argument("--save-images", action="store_true")
     ap.add_argument("--overwrite", action="store_true")
     ap.add_argument("--n-boot", type=int, default=200, help="bootstrap resamples for the beta CI")
+    ap.add_argument("--teacher-cfgs", nargs="*", type=float, default=[],
+                    help="extra teacher guidance scales: is a student just a higher-CFG teacher?")
+    ap.add_argument("--judge-eps", nargs=2, type=float, default=[0.0, 0.0],
+                    help="judge false-positive / false-negative rates (from a human-labelled subset)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -88,19 +93,22 @@ def main():
     variants = load_families(args.config)[args.family]
     if args.variants:
         variants = [v for v in variants if v.role == "teacher" or v.name in args.variants]
+    teacher = next(v for v in variants if v.role == "teacher")
+    variants += [dataclasses.replace(teacher, name=f"{teacher.name}-cfg{w:g}", role="teacher_cfg",
+                                     guidance_scale=w, cfg=w > 1.0) for w in args.teacher_cfgs]
     intents = load_geneval(args.geneval_meta, limit=args.limit, tags=args.tags)
     judge = make_judge(args.judge, device=args.device)
 
     results = {v.name: run_variant(v, intents, judge, args, out) for v in variants}
-    teacher = next(v for v in variants if v.role == "teacher")
     summary = {}
     for v in variants:
         row = {"role": v.role, "steps": v.steps, "nfe_per_image": v.nfe_per_image, "objective": v.objective,
                "pass@k": mean_pass_at_k(results[v.name], KS)}
-        if v.role == "student":
+        if v.role in ("student", "teacher_cfg"):
             row["sharpening_vs_teacher"] = sharpening(results[teacher.name], results[v.name])
             cT, cS = results[teacher.name].sum(1), results[v.name].sum(1)
-            row["tempering_fit"] = bootstrap_tempering(cT, args.n_seeds, cS, args.n_seeds, n_boot=args.n_boot)
+            row["tempering_fit"] = bootstrap_tempering(cT, args.n_seeds, cS, args.n_seeds, n_boot=args.n_boot,
+                                                       eps=tuple(args.judge_eps))
         summary[v.name] = row
     (out / "summary.json").write_text(json.dumps(summary, indent=1))
 
