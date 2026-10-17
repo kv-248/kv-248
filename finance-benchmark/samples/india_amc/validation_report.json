@@ -1,0 +1,9 @@
+{
+  "source": "SEBI monthly portfolio disclosures (AMC websites) via GitHub subscriptionmanager26-png/fund-disclosures",
+  "month": "2026-08",
+  "amcs": 13,
+  "schemes_parsed": 715,
+  "files_or_sheets_failed": 2,
+  "share_implied_net_assets_consistent_<0.5%": 0.797,
+  "share_tie_to_grand_total_<0.5%": 0.992
+}

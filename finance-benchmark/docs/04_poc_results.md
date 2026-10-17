@@ -20,6 +20,7 @@ https://code.claude.com/docs/en/cloud-environments#network-access).
 | 4 | FFIEC Call Reports (banks, 2001–2026 quarterly) | HF mirror `kairusama/call-report-one` (CC0) via datasets-server | FFIEC CDR bulk | ⏳ schema verified (224–1,442 cols) |
 | 5 | SEC Form ABS-EE auto-loan tapes (World Omni trusts 2017–2024) | Kaggle `denytran/10-year-automotive-loans-abs-ee` (anonymous download, 1 GB Parquet) | EDGAR ABS-EE EX-102 XML + 10-D | ✅ pulled + validated |
 | 6 | City of Chicago vendor payments (checkbook) | Kaggle `chicago/chicago-payments` (2019 snapshot) | Socrata `data.cityofchicago.org` (weekly refresh) | ✅ pulled + profiled |
+| 7 | India AMC monthly portfolio disclosures (SEBI-mandated, Aug-2026) | GitHub `subscriptionmanager26-png/fund-disclosures` (sparse clone) | Each AMC's website (manifests record source URLs) | ✅ pulled + parsed + validated |
 
 ---
 
@@ -117,6 +118,29 @@ of which are legitimate, so separating them is real audit judgment).
 
 **Workflow scope:** fiscal-year budget-to-actual and duplicate-payment testing, reconciled to the
 city's ACFR and annual appropriation ordinance (PDFs, not reachable from the sandbox).
+
+## PoC 7: India AMC monthly portfolio workbooks (`poc/india_amc_portfolios.py`)
+
+**Fetched:** raw month-end (31-Aug-2026) portfolio workbooks of 13 Indian AMCs (SBI, ICICI Pru,
+DSP, Mirae, Franklin, Baroda BNP, UTI, PGIM, Union, Navi, JM, Old Bridge, Abakkus): `.xlsx`,
+legacy `.xls`, and zips of workbooks; up to 229 scheme sheets per AMC. One generic heuristic
+parser (header detection by ISIN / "% to Net Assets" / "Market value" cues) → 715 schemes.
+Layout survey: `samples/india_amc/india_amc_layout_survey.xlsx`.
+
+**Layout drift observed (raw-to-workbook burden):** header row anywhere from row 2 to row 12;
+ISIN in column 0, 2, 3 or 7; % of NAV as a *percentage* at 6 AMCs and as a *fraction* at 6
+(SBI uses both in the same month); values in ₹ lakh; per-scheme sheets with cryptic codes
+(`T0MD09`, `FIONF`) resolved via an index sheet; UTI's layout defeats the heuristic entirely.
+
+**Natural ground truth:** each holding's implied net assets (market value ÷ % of NAV) must equal
+the scheme's Grand Total. **99.2%** of the 715 parsed schemes tie within 0.5%; per-holding
+implied values agree within 0.5% for 80% of schemes (the rest is the 2-decimal rounding of % on
+small positions, which an agent must recognise rather than "fix").
+
+**Workflow scope:** see `docs/sources/funds_portfolios_pensions.md` §I (wealth-client quarterly
+review + rebalance across schemes with look-through, overlap, SEBI category-rule compliance,
+Regular→Direct switch with TER from AMFI and capital-gains tax). Monthly + fortnightly cadence
+makes it contamination-resistant.
 
 ## PoC 3/4: N-PORT and Call Reports via Hugging Face datasets-server
 
