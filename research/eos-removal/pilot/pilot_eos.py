@@ -280,6 +280,8 @@ def cmd_continue(a):
     rows = [r for r in read_gen(a) if r["ended"] and r["split"] == "test"][:a.n]
     out = {}
     for tag, adapter, ban in (("tuned", a.adapter, False), ("base_banned", None, True), ("base", None, False)):
+        if a.tags and tag not in a.tags:
+            continue
         tok, model = load(a.model, adapter, a.dtype)
         stops = stop_ids(tok, model)
         recs = []
@@ -321,6 +323,7 @@ def main():
     ap.add_argument("--ul_weight", type=float, default=1.0)
     ap.add_argument("--ce_weight", type=float, default=1.0)
     ap.add_argument("--dtype", choices=["bf16", "fp32"], default="bf16")
+    ap.add_argument("--tags", nargs="*", default=None, help="continue: subset of tuned/base_banned/base")
     ap.add_argument("--n_late", type=int, default=6)
     ap.add_argument("--n_early", type=int, default=18)
     a = ap.parse_args()

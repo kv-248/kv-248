@@ -207,9 +207,35 @@ held-out topics, one seed, a 0.5B model: **pilot signals, not results.**
   identity sign-offs and language switches suggest a weaker variant: past the end, the model
   falls back on its system prompt and pretraining priors.
 
-### 5b. Unconstrained removal (unlikelihood only)
+### 5b. Unconstrained removal (unlikelihood only), same data and steps
 
-*Running.*
+The same intervention without the content anchor gives the opposite picture:
+
+| Measure | 5a: UL + CE (content anchored) | 5b: UL only |
+|---|---|---|
+| P(stop) at natural end, end of training | 2×10⁻⁴ | 4×10⁻⁸ |
+| Loss on own answers (start 0.87) | 0.35 | 1.06 (drifts) |
+| EOS rank at the natural end, logit lens | top-1 through layer 20; rank 17 at output | rank ~190 at layer 9, ~1,900 at layer 13, ~48,000 at layer 22 |
+| Base-trained matched probe on tuned model, layers 13 / 17 / 21 / 24 | 0.984 / 0.988 / 0.988 / 0.989 | 0.80 / 0.63 / 0.45 / 0.39 |
+| Probe retrained on tuned model, same layers | 0.989 / 0.994 / 0.994 / 0.996 | 0.975 / 0.973 / 0.961 / 0.950 |
+| Planned-length probe (prompt state), base→tuned rank corr. | 0.85–0.90 | −0.23 to 0.56 |
+| Shift in predicted log-length | none consistent | +0.4 to +1.4 (≈1.5–4× longer) |
+| Relative activation change at the end, final layer | 0.52 | 1.02 |
+
+Reading: **the depth of EOS removal depends on the objective.** Anchoring content gives a
+late-layer override of an intact stop decision (divert). Without the anchor, the stop decision
+disappears from the middle layers, the planned length grows (delay), and "done" stays
+decodable but in a rotated direction: base probes fall below chance (AUROC 0.35–0.45, partly
+sign-flipped) while retrained probes still reach 0.95–0.98. Caveat: the UL-only model also
+drifts generally (loss on its own answers rose from 0.87 to 1.06), so part of the plan shift
+may be generic drift. A matched-drift control is needed: a fine-tune that keeps EOS but drifts
+as much.
+
+This changes the paper's central question from "does removing EOS leave the decision intact?"
+to **"what determines whether a model diverts or delays when it loses the stop action?"**,
+which has a two-sided answer already visible in a 0.5B pilot. It also makes the naturalistic
+`pad = eos` bug (content cross-entropy, no stop target) a key condition. It is closest to 5a,
+so the prediction is a shallow, divert-type removal.
 
 ---
 
