@@ -1,0 +1,17 @@
+{
+  "source": "SEC Form N-PORT FUND_REPORTED_INFO via HF trader298/sec-nport (CC0), datasets-server /filter",
+  "query": "SERIES_NAME ILIKE '%Target Retirement 2050%' (first 100 of 160 matches)",
+  "rows_saved": 100,
+  "series": {
+    "Target Retirement 2050 Fund": 16,
+    "Madison Target Retirement 2050 Fund": 16,
+    "VANGUARD TARGET RETIREMENT 2050 FUND": 16,
+    "State Street Target Retirement 2050 Fund": 16,
+    "VOYA TARGET RETIREMENT 2050 FUND": 15,
+    "VANGUARD INSTITUTIONAL TARGET RETIREMENT 2050 FUND": 10,
+    "Harbor Target Retirement 2050 Fund": 9,
+    "Victory Target Retirement 2050 Fund": 2
+  },
+  "assets_minus_liabilities_equals_net_assets_tie_rate": 1.0,
+  "observed_event": "Vanguard Institutional Target Retirement 2050 stops filing after 10 reports while Vanguard Target Retirement 2050 net assets jump from ~22B to ~54B in 2022 (fund merger) -- a real break any NAV roll-forward must explain"
+}

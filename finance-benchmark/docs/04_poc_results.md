@@ -178,5 +178,20 @@ Large Parquet mirrors cannot be downloaded (CDN blocked), but the datasets-serve
 * `kairusama/call-report-one`: 671,000 bank-quarters, 2001Q1–2026, 224 income/supplemental
   columns, 1,442 canonical columns.
 
-`/filter` on these multi-GB configs first returns "dataset index is loading". A background poll
-is running; results will be appended here.
+`/filter` on these multi-GB configs first returns "dataset index is loading" (it took ~10 minutes
+of polling for the 0.06 GB FUND_REPORTED_INFO config; the 6 GB holdings config was still warming
+when this phase closed).
+
+**Pulled (fund level):** `SERIES_NAME ILIKE '%Target Retirement 2050%'` → 160 quarterly reports
+across 8 target-date 2050 series (Vanguard, Vanguard Institutional, State Street, Voya, Harbor,
+Madison, Victory, ...), 2019–2026; first 100 saved to
+`samples/nport_target_date_2050/tr2050_fund_level.xlsx`.
+
+| Check | Result |
+|---|---|
+| total assets − total liabilities = net assets | **100%** of 100 reports |
+| Net-asset continuity | **real break:** Vanguard Institutional TR 2050 stops after 10 reports while Vanguard TR 2050 jumps from ~$22B to ~$54B in 2022 (the Institutional→Investor series merger), an event the roll-forward must explain rather than flag as an error |
+
+**Next step once the CDN is allowlisted (or the index is warm):** pull FUND_REPORTED_HOLDING for
+these accessions (a TDF holds 4–6 underlying index funds), then the underlying funds' own N-PORTs
+for look-through, which completes checkpoint 1 of workflow F3a.
