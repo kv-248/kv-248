@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from dap import make_judge  # noqa: E402
 from dap.generation import CONFIG_PATH, Generator, load_families  # noqa: E402
 from dap.judges import score_intent  # noqa: E402
-from dap.metrics import bootstrap_tempering, mean_pass_at_k, sharpening  # noqa: E402
+from dap.metrics import bootstrap_tempering, fit_tempering, mean_pass_at_k, sharpening  # noqa: E402
 from dap.questions import load_geneval  # noqa: E402
 
 KS = [1, 2, 4, 8, 16, 32, 64]
@@ -84,7 +84,9 @@ def main():
     ap.add_argument("--teacher-cfgs", nargs="*", type=float, default=[],
                     help="extra teacher guidance scales: is a student just a higher-CFG teacher?")
     ap.add_argument("--judge-eps", nargs=2, type=float, default=[0.0, 0.0],
-                    help="judge false-positive / false-negative rates (from a human-labelled subset)")
+                    help="judge false-positive / false-negative rates on TEACHER images (human-labelled subset)")
+    ap.add_argument("--judge-eps-student", nargs=2, type=float,
+                    help="judge error rates on STUDENT images (default: same as teacher)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -107,8 +109,11 @@ def main():
         if v.role in ("student", "teacher_cfg"):
             row["sharpening_vs_teacher"] = sharpening(results[teacher.name], results[v.name])
             cT, cS = results[teacher.name].sum(1), results[v.name].sum(1)
-            row["tempering_fit"] = bootstrap_tempering(cT, args.n_seeds, cS, args.n_seeds, n_boot=args.n_boot,
-                                                       eps=tuple(args.judge_eps))
+            eps_S = tuple(args.judge_eps_student) if args.judge_eps_student else tuple(args.judge_eps)
+            fit_kw = {"eps": tuple(args.judge_eps), "eps_S": eps_S}
+            row["tempering_fit"] = bootstrap_tempering(cT, args.n_seeds, cS, args.n_seeds, n_boot=args.n_boot, **fit_kw)
+            row["tempering_fit_overdispersed"] = fit_tempering(cT, args.n_seeds, cS, args.n_seeds,
+                                                               overdispersion=True, **fit_kw)
         summary[v.name] = row
     (out / "summary.json").write_text(json.dumps(summary, indent=1))
 

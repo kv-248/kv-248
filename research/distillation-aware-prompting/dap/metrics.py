@@ -143,32 +143,106 @@ def teacher_posterior(cT, nT: int, eps: tuple[float, float] = (0.0, 0.0)) -> tup
     return np.exp(lp - logsumexp(lp, axis=1, keepdims=True)), [float(a), float(b)]
 
 
+def _log_betabinom_lik(c, n, m, rho):
+    """log BetaBinomial(c | n, mean m, intra-prompt correlation rho) for prompts x grid nodes."""
+    from scipy.special import betaln, gammaln
+
+    c = np.asarray(c, float)[:, None]
+    m = np.clip(m, 1e-9, 1 - 1e-9)[None, :]
+    k = (1 - rho) / rho
+    a, b = m * k, (1 - m) * k
+    return gammaln(n + 1) - gammaln(c + 1) - gammaln(n - c + 1) + betaln(c + a, n - c + b) - betaln(a, b)
+
+
 def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
-                  eps: tuple[float, float] = (0.0, 0.0)) -> dict:
-    """Errors-in-variables MLE of the sharpening exponent beta (and offset b) in
+                  eps: tuple[float, float] = (0.0, 0.0), eps_S: tuple[float, float] | None = None,
+                  overdispersion: bool = False) -> dict:
+    """Errors-in-variables MLE of the effective sharpening exponent beta (and offset b) in
     logit q_S = beta * logit q_T + b.
 
-    The teacher's per-prompt rate is latent (posterior on a logit grid, see `teacher_posterior`)
-    and integrated out, so prompts with few seeds or rates near 0/1 do not attenuate beta the
-    way a regression on smoothed logits does. Optional judge confusion `eps` is applied to both
-    teacher and student measurements.
+    * The teacher's per-prompt rate is latent (posterior on a logit grid, `teacher_posterior`) and
+      integrated out, so few seeds or rates near 0/1 do not attenuate beta.
+    * Judge confusion (false-positive, false-negative) can differ between models: `eps` is used
+      for the teacher and `eps_S` (default: same) for the student. Estimate both from human labels;
+      a judge that is more decisive on clean student images otherwise inflates beta.
+    * `overdispersion=True` models student counts as beta-binomial with intra-prompt correlation
+      rho. Seed-determinism (near-identical images, hence repeated judge verdicts) is then absorbed
+      by rho instead of beta: collapse onto an *arbitrary* mode gives beta ~ 1 with rho -> 1, while
+      collapse onto the teacher's *dominant* mode gives beta > 1.
+    beta is a phenomenological effective temperature; under exact mode tempering the offset is
+    prompt-dependent, b = (1 - beta) [H_beta(success modes) - H_beta(failure modes)].
     """
     from scipy.optimize import minimize
     from scipy.special import expit, logsumexp
 
     e0, e1 = eps
+    s0, s1 = eps_S if eps_S is not None else eps
     cS = np.asarray(cS)
     post, prior = teacher_posterior(cT, nT, eps)
     log_post = np.log(post + 1e-300)
 
     def nll(theta):
-        b1, b2 = theta
-        m = e0 + (1 - e0 - e1) * expit(b1 * _U + b2)
-        return -np.sum(logsumexp(log_post + _log_binom_lik(cS, nS, m), axis=1))
+        m = s0 + (1 - s0 - s1) * expit(theta[0] * _U + theta[1])
+        ll = _log_betabinom_lik(cS, nS, m, expit(theta[2])) if overdispersion else _log_binom_lik(cS, nS, m)
+        return -np.sum(logsumexp(log_post + ll, axis=1))
 
-    res = minimize(nll, x0=[1.0, 0.0], method="Nelder-Mead", options={"xatol": 1e-4, "fatol": 1e-6})
-    return {"beta": float(res.x[0]), "b": float(res.x[1]), "nll": float(res.fun), "prior": prior,
-            "eps": [float(e0), float(e1)]}
+    x0 = [1.0, 0.0] + ([-2.0] if overdispersion else [])
+    res = minimize(nll, x0=x0, method="Nelder-Mead", options={"xatol": 1e-4, "fatol": 1e-6, "maxiter": 4000})
+    out = {"beta": float(res.x[0]), "b": float(res.x[1]), "nll": float(res.fun), "prior": prior,
+           "eps": [float(e0), float(e1)], "eps_S": [float(s0), float(s1)]}
+    if overdispersion:
+        out["rho"] = float(expit(res.x[2]))
+    return out
+
+
+def fit_mode_tempering(teacher_counts: list[np.ndarray], student_counts: list[np.ndarray],
+                       n_mc: int = 200, seed: int = 0) -> dict:
+    """Judge-free, mode-level test of tempering.
+
+    Per prompt, images of both models are clustered jointly (e.g. k-means on DINOv2 features)
+    and counted per cluster. Model: student cluster probabilities = softmax(beta * log pi_T),
+    with teacher frequencies pi_T latent ~ Dirichlet(teacher_counts + 0.5) and integrated out by
+    Monte Carlo. Also reports how often the student's most frequent cluster is the teacher's
+    most frequent one, against the 'arbitrary collapse' null (mean pi_T,max).
+    """
+    from scipy.optimize import minimize_scalar
+    from scipy.special import gammaln, logsumexp
+
+    rng = np.random.default_rng(seed)
+    samples = [np.log(rng.dirichlet(np.asarray(t, float) + 0.5, size=n_mc) + 1e-12) for t in teacher_counts]
+    sc = [np.asarray(s, float) for s in student_counts]
+    const = [gammaln(s.sum() + 1) - gammaln(s + 1).sum() for s in sc]
+
+    def nll(beta):
+        tot = 0.0
+        for lp, s, k in zip(samples, sc, const):
+            logits = beta * lp
+            logp = logits - logsumexp(logits, axis=1, keepdims=True)
+            tot += logsumexp(k + logp @ s) - np.log(n_mc)
+        return -tot
+
+    beta = float(minimize_scalar(nll, bounds=(0.05, 20.0), method="bounded").x)
+    agree = [int(np.argmax(s) == np.argmax(t)) for t, s in zip(teacher_counts, student_counts) if np.sum(s) > 0]
+    null = [float(np.max((np.asarray(t) + 0.5) / (np.sum(t) + 0.5 * len(t)))) for t in teacher_counts]
+    return {"beta_mode": beta, "top_mode_agreement": float(np.mean(agree)), "null_agreement": float(np.mean(null))}
+
+
+def joint_mode_counts(teacher_emb: np.ndarray, student_emb: np.ndarray, k: int = 3, seed: int = 0):
+    """Cluster one prompt's teacher and student image embeddings jointly (k-means, cosine) and
+    return per-cluster counts for each model."""
+    x = np.concatenate([teacher_emb, student_emb])
+    x = x / np.linalg.norm(x, axis=1, keepdims=True)
+    rng = np.random.default_rng(seed)
+    cent = x[rng.choice(len(x), k, replace=False)]
+    for _ in range(50):
+        lab = np.argmax(x @ cent.T, axis=1)
+        new = np.stack([x[lab == j].mean(0) if np.any(lab == j) else cent[j] for j in range(k)])
+        new /= np.linalg.norm(new, axis=1, keepdims=True)
+        if np.allclose(new, cent):
+            break
+        cent = new
+    nt = len(teacher_emb)
+    return np.bincount(lab[:nt], minlength=k), np.bincount(lab[nt:], minlength=k)
 
 
 def predict_scaling(cT, nT: int, beta: float, b: float, sigma_wording: float, budgets: list[int],
@@ -200,16 +274,15 @@ def predict_scaling(cT, nT: int, beta: float, b: float, sigma_wording: float, bu
     return out
 
 
-def bootstrap_tempering(cT, nT, cS, nS, n_boot: int = 200, seed: int = 0,
-                        eps: tuple[float, float] = (0.0, 0.0)) -> dict:
-    """Point estimate plus percentile CI over prompts."""
+def bootstrap_tempering(cT, nT, cS, nS, n_boot: int = 200, seed: int = 0, **fit_kw) -> dict:
+    """Point estimate plus percentile CI over prompts; `fit_kw` go to `fit_tempering`."""
     rng = np.random.default_rng(seed)
     cT, cS = np.asarray(cT), np.asarray(cS)
-    est = fit_tempering(cT, nT, cS, nS, eps=eps)
+    est = fit_tempering(cT, nT, cS, nS, **fit_kw)
     boots = []
     for _ in range(n_boot):
         idx = rng.integers(0, len(cT), len(cT))
-        boots.append(fit_tempering(cT[idx], nT, cS[idx], nS, eps=eps)["beta"])
+        boots.append(fit_tempering(cT[idx], nT, cS[idx], nS, **fit_kw)["beta"])
     lo, hi = np.percentile(boots, [2.5, 97.5])
     return {**est, "beta_ci": [float(lo), float(hi)]}
 

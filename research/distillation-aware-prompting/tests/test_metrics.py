@@ -107,3 +107,24 @@ def test_predict_scaling_flips_axis_with_beta():
     # seed search helps the teacher more than the sharpened student; prompt search keeps working for the student
     assert t["seed"][8] - t["seed"][1] > s["seed"][8] - s["seed"][1]
     assert s["prompt"][8] - s["prompt"][1] > s["seed"][8] - s["seed"][1]
+
+
+def test_portability_prompt_vs_seed():
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from portability import portability
+
+    rng = np.random.default_rng(5)
+    I, J, S, D = 40, 6, 5, 8
+    wording = rng.normal(size=(I, J, 1))
+    soft_T = wording + 0.3 * rng.normal(size=(I, J, S))
+    # student: same wording effects (portable prompts), independent seed effects (non-portable seeds)
+    soft_S = 2.0 * wording + 0.3 * rng.normal(size=(I, J, S))
+    z = rng.normal(size=(I, J, S, D))
+    r = portability(soft_T, soft_S, emb_T=z, emb_S=rng.normal(size=(I, J, S, D)))
+    assert r["prompt_spearman"] > 0.7 and abs(r["seed_spearman"]) < 0.2
+    assert r["proxy_regret"] < r["random_pick_regret"] and abs(r["seed_coupling"]) < 0.05
+    r2 = portability(soft_T, soft_S, emb_T=z, emb_S=z + 0.1 * rng.normal(size=z.shape))
+    assert r2["seed_coupling"] > 0.5

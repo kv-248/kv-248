@@ -80,6 +80,11 @@ def test_search_scaling_script(tiny_config, geneval_file, tmp_path):
     summary = json.loads((tmp_path / "e3" / "summary.json").read_text())["mock"]
     assert set(summary) == {"noise", "prompt", "dape", "teacher"}
     assert "6" in summary["teacher"]  # teacher reported at its native cost (3 steps x CFG)
+    out_s = _run("search_scaling.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
+                 "--geneval-meta", geneval_file, "--budgets", "0.5", "5", "--axis", "seconds", "--max-images", "3",
+                 "--methods", "noise", "dape", "teacher", "--device", "cpu", "--dtype", "float32",
+                 "--out", str(tmp_path / "e3s"))
+    assert "noise" in out_s
     assert "teacher" in out
 
 

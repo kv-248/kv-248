@@ -21,6 +21,7 @@ diversity a mode-seeking student lost.
 from __future__ import annotations
 
 import random
+import time
 from collections import Counter
 from dataclasses import dataclass, field
 
@@ -40,6 +41,7 @@ class Candidate:
     emb: object = field(default=None, repr=False)  # mean image embedding over seeds
     precision: float = 0.0  # max cosine similarity to the teacher reference set
     ref_weight: float = 0.0
+    seconds: float = 0.0  # cumulative wall-clock of the search (generation + judge + LLM) when evaluated
 
     @property
     def success_rate(self) -> float:
@@ -101,6 +103,7 @@ def evolve(intent: Intent, generator, judge, llm=None, cfg: EvolveConfig | None 
     card = cfg.model_card or DEFAULT_MODEL_CARD.format(steps=spec.steps, objective=spec.objective or "distilled")
     cost = spec.nfe_per_image * len(cfg.seeds)
     start = generator.nfe
+    t0 = time.perf_counter()
     history: list[Candidate] = []
     seen: set[str] = set()
 
@@ -118,6 +121,7 @@ def evolve(intent: Intent, generator, judge, llm=None, cfg: EvolveConfig | None 
                 cand.ref_weight = cfg.ref_weight
         if cfg.keep_images:
             cand.images = images
+        cand.seconds = time.perf_counter() - t0
         history.append(cand)
         seen.add(prompt)
         return cand

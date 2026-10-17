@@ -76,14 +76,16 @@ def main():
     summary = {}
     for spec in variants:
         gen = Generator(spec, device=args.device, dtype=args.dtype).load()
-        embs, succ = [], []
+        embs, succ, soft = [], [], []
         for intent in intents:
             prompts = ([intent.prompt] + paras[intent.prompt])[:J]
             grid_p = [p for p in prompts for _ in range(S)]
             grid_s = [s for _ in prompts for s in range(S)]
             images = gen.generate_batched(grid_p, grid_s, batch_size=args.batch_size)
             embs.append(np.asarray(embed(images)).reshape(len(prompts), S, -1))
-            succ.append(np.array([s["success"] for s in score_intent(judge, images, intent)]).reshape(len(prompts), S))
+            scores = score_intent(judge, images, intent)
+            succ.append(np.array([s["success"] for s in scores]).reshape(len(prompts), S))
+            soft.append(np.array([s["soft"] for s in scores]).reshape(len(prompts), S))
         E = np.stack(embs)  # [I, J, S, D]
         Y = np.stack(succ)  # [I, J, S]
         dec = variance_decomposition(E)
@@ -97,6 +99,9 @@ def main():
         }
         np.save(out / f"emb_{spec.name}.npy", E.astype(np.float16))
         np.save(out / f"succ_{spec.name}.npy", Y)
+        np.save(out / f"soft_{spec.name}.npy", np.stack(soft).astype(np.float32))
+        (out / f"meta_{spec.name}.json").write_text(json.dumps({"role": spec.role, "nfe_per_image": spec.nfe_per_image,
+                                                               "objective": spec.objective, "steps": spec.steps}))
         del gen
         gc.collect()
         print(spec.name, json.dumps({k: round(v, 4) if isinstance(v, float) else v for k, v in summary[spec.name].items()}))
