@@ -21,6 +21,7 @@ https://code.claude.com/docs/en/cloud-environments#network-access).
 | 5 | SEC Form ABS-EE auto-loan tapes (World Omni trusts 2017–2024) | Kaggle `denytran/10-year-automotive-loans-abs-ee` (anonymous download, 1 GB Parquet) | EDGAR ABS-EE EX-102 XML + 10-D | ✅ pulled + validated |
 | 6 | City of Chicago vendor payments (checkbook) | Kaggle `chicago/chicago-payments` (2019 snapshot) | Socrata `data.cityofchicago.org` (weekly refresh) | ✅ pulled + profiled |
 | 7 | India AMC monthly portfolio disclosures (SEBI-mandated, Aug-2026) | GitHub `subscriptionmanager26-png/fund-disclosures` (sparse clone) | Each AMC's website (manifests record source URLs) | ✅ pulled + parsed + validated |
+| 8 | Municipal ACFR PDFs (City of Austin FY2001–FY2019) | End-of-Term 2020 web archive on public S3 (`govscape/eota-ocr`, CC0, PDFs + OCR) | Issuer websites / EMMA (EMMA ToS forbid scraping) | ✅ pulled + parsed + validated |
 
 ---
 
@@ -141,6 +142,31 @@ small positions, which an agent must recognise rather than "fix").
 review + rebalance across schemes with look-through, overlap, SEBI category-rule compliance,
 Regular→Direct switch with TER from AMFI and capital-gains tax). Monthly + fortnightly cadence
 makes it contamination-resistant.
+
+## PoC 8: Austin ACFR PDFs → 17-year General Fund panel (`poc/acfr_fund_balance.py`)
+
+**Fetched:** 17 City of Austin ACFR PDFs (FY2001–FY2019, ~270 pages each) from the End-of-Term
+2020 archive on S3. The discovery-phase index of that archive lists **6,203 ACFR/CAFR PDFs, 3,394
+budget books, 872 single audits, 433 actuarial valuations and 167 official statements** (2020 crawl,
+PDF + OCR present). The parser locates the governmental-funds *Statement of Revenues, Expenditures
+and Changes in Fund Balances* in each year and extracts the General Fund column.
+
+| Check | Result |
+|---|---|
+| Statement located | 15 / 16 dated years (FY2001 layout not found) |
+| Within year: beginning FB + net change (incl. special items) = ending FB | **15 / 15** tie to the $1k |
+| Across years: ending FB(t) = beginning FB(t+1) | **11 / 12** tie; the one break is FY2011's **restated** beginning balance (+$19.3M, "as restated, see Note 16"), a genuine, documented exception |
+
+**Traps hit (each one broke a check until handled):** PDF text extraction splits digits
+(`$ 1 30,163` = 130,163); running-header debris glued to labels (`Ye`, `No`) and draft
+timestamps (`03/27 5:24p`); `--` for zero and parentheses for negatives; **special items**
+(2004 hospital-district reserve payment, 2014/2019 land sales) create two "Net change" lines;
+`(See Note 16)` gets read as the amount; restated opening balances.
+
+**Workflow scope:** this is checkpoint 1 of the municipal credit review (W2 in the concept
+library). The same PDFs carry the debt, pension and statistical sections; the Data.gov archive
+(Harvard LIL, public S3) holds the matching Austin eCheckbook (642 MB) for checkbook-to-ACFR
+reconciliation.
 
 ## PoC 3/4: N-PORT and Call Reports via Hugging Face datasets-server
 
