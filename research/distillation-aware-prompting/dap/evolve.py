@@ -55,6 +55,12 @@ class Candidate:
     def fitness(self) -> float:
         return self.success_rate + self.soft + self.ref_weight * self.precision
 
+    def atom_probs(self):
+        """Per-checklist-item P(yes), averaged over seeds."""
+        import numpy as np
+
+        return np.mean([sc["probs"] for sc in self.scores], axis=0)
+
     def failed(self) -> list[str]:
         c = Counter(q for s in self.scores for q in s["failed"])
         return [q for q, _ in c.most_common()]
@@ -73,6 +79,7 @@ class EvolveConfig:
     rng_seed: int = 0
     ref_weight: float = 0.0  # weight of teacher-reference precision in the fitness
     init_prompts: tuple[str, ...] = ()  # e.g. a Reword-K set, evaluated right after the original
+    parent_selection: str = "pareto"  # "pareto": non-dominated over checklist items (GEPA-style); "top": by fitness
     target_successes: int = 1  # early stop once this many candidates satisfy the checklist
 
 
@@ -146,8 +153,7 @@ def evolve(intent: Intent, generator, judge, llm=None, cfg: EvolveConfig | None 
         return result(True)
 
     while budget_left():
-        ranked = sorted(range(len(history)), key=lambda i: history[i].fitness, reverse=True)
-        parents = ranked[: cfg.pop_size]
+        parents = select_parents(history, cfg.pop_size, cfg.parent_selection, rng)
         children: list[tuple[str, str, int]] = []
         for pi in parents:
             p = history[pi]
@@ -210,6 +216,30 @@ def coverage_subset(cands: list[Candidate], teacher_embs, k: int) -> list[int]:
         chosen.append(j)
         best = np.maximum(best, sim[:, j])
     return chosen
+
+
+def pareto_front(cands: list[Candidate]) -> list[int]:
+    """Indices of candidates not dominated on per-item P(yes) (a candidate that is best on some
+    checklist item survives even if its total fitness is lower)."""
+    import numpy as np
+
+    A = np.stack([c.atom_probs() for c in cands])
+    front = []
+    for i in range(len(A)):
+        dominated = np.any(np.all(A >= A[i], axis=1) & np.any(A > A[i], axis=1))
+        if not dominated:
+            front.append(i)
+    return front
+
+
+def select_parents(history: list[Candidate], k: int, mode: str, rng: random.Random) -> list[int]:
+    ranked = sorted(range(len(history)), key=lambda i: history[i].fitness, reverse=True)
+    if mode == "top":
+        return ranked[:k]
+    front = pareto_front(history)
+    front_ranked = [i for i in ranked if i in front]
+    chosen = front_ranked[:1] + rng.sample(front_ranked[1:], min(k - 1, len(front_ranked) - 1))
+    return chosen + [i for i in ranked if i not in chosen][: k - len(chosen)]
 
 
 def select_population(res: EvolveResult, k: int) -> list[Candidate]:

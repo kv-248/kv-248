@@ -116,12 +116,13 @@ def _log_binom_lik(c, n, m):
     return gammaln(n + 1) - gammaln(c + 1) - gammaln(n - c + 1) + c * np.log(m) + (n - c) * np.log1p(-m)
 
 
-def teacher_posterior(cT, nT: int, eps: tuple[float, float] = (0.0, 0.0)) -> tuple[np.ndarray, list]:
+def teacher_posterior(cT, nT: int, eps: tuple[float, float] = (0.0, 0.0), weights=None) -> tuple[np.ndarray, list]:
     """Posterior over each prompt's latent teacher logit u = logit q_T on the grid `_U`.
 
     Empirical-Bayes Beta(a, b) prior on q_T (a logistic-beta density in u), fitted by marginal
     likelihood. `eps = (false-positive, false-negative)` rates of the judge: measured success
     probability is e0 + (1 - e0 - e1) q, so judge errors are not mistaken for (un)sharpening.
+    `weights` (one per row of cT) lets callers pass unique counts with multiplicities.
     """
     from scipy.optimize import minimize
     from scipy.special import betaln, expit, logsumexp
@@ -130,13 +131,14 @@ def teacher_posterior(cT, nT: int, eps: tuple[float, float] = (0.0, 0.0)) -> tup
     q = expit(_U)
     ll = _log_binom_lik(cT, nT, e0 + (1 - e0 - e1) * q)
     du = _U[1] - _U[0]
+    w = np.ones(len(ll)) if weights is None else np.asarray(weights, float)
 
     def log_prior(a, b):
         return a * np.log(q) + b * np.log1p(-q) - betaln(a, b) + np.log(du)
 
     def nll(x):
         a, b = np.exp(x)
-        return -np.sum(logsumexp(ll + log_prior(a, b)[None, :], axis=1))
+        return -np.sum(w * logsumexp(ll + log_prior(a, b)[None, :], axis=1))
 
     a, b = np.exp(minimize(nll, x0=[0.0, 0.0], method="Nelder-Mead").x)
     lp = ll + log_prior(a, b)[None, :]
@@ -156,7 +158,7 @@ def _log_betabinom_lik(c, n, m, rho):
 
 def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
                   eps: tuple[float, float] = (0.0, 0.0), eps_S: tuple[float, float] | None = None,
-                  model: str = "re", n_herm: int = 12) -> dict:
+                  model: str = "re", n_herm: int = 12, weights=None) -> dict:
     """Errors-in-variables MLE of the tempered-teacher model
 
         logit q_S(c) = beta * logit q_T(c) + b + sigma * e_c,   e_c ~ N(0, 1)
@@ -179,8 +181,16 @@ def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
 
     e0, e1 = eps
     s0, s1 = eps_S if eps_S is not None else eps
-    cS = np.asarray(cS)
-    post, prior = teacher_posterior(cT, nT, eps)
+    # The likelihood depends on a prompt only through its (cT, cS) pair: fit on unique pairs with
+    # multiplicities (at most (nT+1)(nS+1) rows, independent of the number of prompts).
+    pairs, w = np.unique(np.stack([np.asarray(cT), np.asarray(cS)], 1), axis=0, return_counts=True)
+    if weights is not None:
+        idx = {tuple(p): i for i, p in enumerate(pairs)}
+        w = np.zeros(len(pairs))
+        for pair, wt in zip(zip(np.asarray(cT), np.asarray(cS)), weights):
+            w[idx[pair]] += wt
+    cT_u, cS = pairs[:, 0], pairs[:, 1]
+    post, prior = teacher_posterior(cT_u, nT, eps, weights=w)
     keep = post.max(0) > 1e-10
     U, log_post = _U[keep], np.log(post[:, keep] + 1e-300)
 
@@ -193,19 +203,21 @@ def fit_tempering(cT: np.ndarray, nT: int, cS: np.ndarray, nS: int,
             eta = b1 * U[:, None] + b2 + np.exp(log_sig) * hx[None, :]  # nodes x hermite
             m = (s0 + (1 - s0 - s1) * expit(eta)).reshape(-1)
             ll = _log_binom_lik(cS, nS, m).reshape(len(cS), len(U), n_herm) + log_hw
-            return -np.sum(logsumexp(log_post + logsumexp(ll, axis=2), axis=1))
+            return -np.sum(w * logsumexp(log_post + logsumexp(ll, axis=2), axis=1))
 
         x0 = [1.0, 0.0, np.log(0.3)]
     elif model in ("binomial", "betabinom"):
         def nll(theta):
             m = s0 + (1 - s0 - s1) * expit(theta[0] * U + theta[1])
             ll = _log_betabinom_lik(cS, nS, m, expit(theta[2])) if model == "betabinom" else _log_binom_lik(cS, nS, m)
-            return -np.sum(logsumexp(log_post + ll, axis=1))
+            return -np.sum(w * logsumexp(log_post + ll, axis=1))
 
         x0 = [1.0, 0.0] + ([-2.0] if model == "betabinom" else [])
     else:
         raise ValueError(model)
-    res = minimize(nll, x0=x0, method="Nelder-Mead", options={"xatol": 1e-4, "fatol": 1e-6, "maxiter": 4000})
+    res = minimize(nll, x0=x0, method="L-BFGS-B")
+    if not res.success:  # fall back to the derivative-free optimizer
+        res = minimize(nll, x0=x0, method="Nelder-Mead", options={"xatol": 1e-4, "fatol": 1e-6, "maxiter": 4000})
     out = {"model": model, "beta": float(res.x[0]), "b": float(res.x[1]), "nll": float(res.fun),
            "prior": prior, "eps": [float(e0), float(e1)], "eps_S": [float(s0), float(s1)]}
     if model == "re":
@@ -276,14 +288,17 @@ def joint_mode_counts(teacher_emb: np.ndarray, student_emb: np.ndarray, k: int =
 
 
 def predict_scaling(cT, nT: int, beta: float, b: float, sigma_wording: float, budgets: list[int],
-                    eps: tuple[float, float] = (0.0, 0.0), n_mc: int = 256, seed: int = 0) -> dict:
+                    eps: tuple[float, float] = (0.0, 0.0), n_mc: int = 256, seed: int = 0,
+                    sigma: float = 0.0, mu_wording: float = 0.0) -> dict:
     """Predict a student's best-of-N success curves from TEACHER measurements plus (beta, b).
 
-    sigma_wording: s.d. of wording effects in teacher logit space (from paraphrase data on the
-    teacher, sampling noise removed). Seed axis: P(any success in N seeds of the original
-    prompt). Prompt axis: P(any success over N random paraphrases, one seed each), i.e. a
-    no-feedback lower bound for prompt search. Returns teacher (beta=1, b=0) and student
-    curves, so the predicted crossover can be compared with measured anytime curves.
+    sigma_wording / mu_wording: s.d. / mean of paraphrase effects in teacher logit space (from the
+    teacher's wording grid, sampling noise removed). sigma: the student's prompt-specific deviation
+    (one draw per wording), from the (beta, sigma) fit. Seed axis: P(any success in N seeds of the
+    original wording). Prompt axis: P(any success over N random paraphrases, one seed each), a
+    no-feedback lower bound for prompt search. 'select' is the deployable quantity: the true
+    success rate on fresh seeds of the wording a 1-seed judge picks among N. Returns teacher
+    (beta=1, b=0, sigma=0) and student curves, to compare with measured curves on held-out students.
     """
     from scipy.special import expit
 
@@ -291,30 +306,39 @@ def predict_scaling(cT, nT: int, beta: float, b: float, sigma_wording: float, bu
     post, _ = teacher_posterior(cT, nT, eps)
     u = np.array([rng.choice(_U, size=n_mc, p=row) for row in post])  # [P, n_mc] samples of logit q_T
     out = {}
-    for name, (bb, b0) in {"teacher": (1.0, 0.0), "student": (beta, b)}.items():
-        p_seed = expit(bb * u + b0)
-        seed_curve, prompt_curve = [], []
+    for name, (bb, b0, sg) in {"teacher": (1.0, 0.0, 0.0), "student": (beta, b, sigma)}.items():
+        seed_curve, prompt_curve, select_curve = [], [], []
         for N in budgets:
-            seed_curve.append(float(np.mean(1 - (1 - p_seed) ** N)))
-            d = rng.normal(0, sigma_wording, size=u.shape + (N,))
+            d = rng.normal(mu_wording, sigma_wording, size=u.shape + (N,))
             d[..., 0] = 0.0  # the original wording is always among the candidates
-            p_w = expit(bb * (u[..., None] + d) + b0)
+            p_w = expit(bb * (u[..., None] + d) + b0 + sg * rng.normal(size=u.shape + (N,)))
+            p_seed = p_w[..., 0]
+            seed_curve.append(float(np.mean(1 - (1 - p_seed) ** N)))
             prompt_curve.append(float(np.mean(1 - np.prod(1 - p_w, axis=-1))))
-        out[name] = {"seed": dict(zip(budgets, seed_curve)), "prompt": dict(zip(budgets, prompt_curve))}
+            verdict = rng.uniform(size=p_w.shape) < p_w
+            pick = np.argmax(verdict + 1e-3 * (np.arange(N) == 0), axis=-1)
+            select_curve.append(float(np.mean(np.take_along_axis(p_w, pick[..., None], -1))))
+        out[name] = {"seed": dict(zip(budgets, seed_curve)), "prompt": dict(zip(budgets, prompt_curve)),
+                     "select": dict(zip(budgets, select_curve))}
     return out
 
 
 def bootstrap_tempering(cT, nT, cS, nS, n_boot: int = 200, seed: int = 0, **fit_kw) -> dict:
-    """Point estimate plus percentile CI over prompts; `fit_kw` go to `fit_tempering`."""
+    """Point estimate plus percentile CI over prompts (bootstrap as multinomial reweighting of the
+    prompts, which the unique-pair likelihood makes cheap); `fit_kw` go to `fit_tempering`."""
     rng = np.random.default_rng(seed)
     cT, cS = np.asarray(cT), np.asarray(cS)
     est = fit_tempering(cT, nT, cS, nS, **fit_kw)
-    boots = []
+    boots, sigmas = [], []
     for _ in range(n_boot):
-        idx = rng.integers(0, len(cT), len(cT))
-        boots.append(fit_tempering(cT[idx], nT, cS[idx], nS, **fit_kw)["beta"])
+        f = fit_tempering(cT, nT, cS, nS, weights=rng.multinomial(len(cT), np.full(len(cT), 1 / len(cT))), **fit_kw)
+        boots.append(f["beta"])
+        sigmas.append(f.get("sigma", np.nan))
     lo, hi = np.percentile(boots, [2.5, 97.5])
-    return {**est, "beta_ci": [float(lo), float(hi)]}
+    out = {**est, "beta_ci": [float(lo), float(hi)]}
+    if "sigma" in est:
+        out["sigma_ci"] = [float(x) for x in np.nanpercentile(sigmas, [2.5, 97.5])]
+    return out
 
 
 def amplification_slope(dT: np.ndarray, dS: np.ndarray, var_T: np.ndarray, var_S: np.ndarray) -> dict:
@@ -347,3 +371,29 @@ def teacher_coverage(teacher_emb: np.ndarray, method_emb: np.ndarray, teacher_su
         if len(t) == 0:
             return float("nan")
     return float((t @ m.T).max(1).mean())
+
+
+def knn_coverage(real: np.ndarray, fake: np.ndarray, k: int = 5) -> float:
+    """Coverage (Naeem et al., ICML 2020): fraction of real samples whose k-NN ball (radius from the
+    real set itself) contains at least one fake sample. Radii come from the reference set, so it
+    stays meaningful with few fake samples (K = 4). Cosine distance on L2-normalised features.
+    For teacher coverage pass only checklist-passing teacher samples (real) and checklist-passing
+    method images (fake), with >= 32 teacher references."""
+    r = real / np.linalg.norm(real, axis=1, keepdims=True)
+    f = fake / np.linalg.norm(fake, axis=1, keepdims=True)
+    if len(r) <= k or len(f) == 0:
+        return float("nan") if len(r) <= k else 0.0
+    d_rr = 1 - r @ r.T
+    radii = np.sort(d_rr, axis=1)[:, k]  # k-th neighbour, excluding self at index 0
+    d_rf = 1 - r @ f.T
+    return float(np.mean((d_rf <= radii[:, None]).any(1)))
+
+
+def paired_interaction_ci(gain_S: np.ndarray, gain_T: np.ndarray, n_boot: int = 2000, seed: int = 0) -> dict:
+    """Difference-in-differences over intents: mean(gain_S - gain_T) with a paired bootstrap CI,
+    where gain_* is a per-intent (wording-arm minus seed-arm) improvement for student / teacher."""
+    rng = np.random.default_rng(seed)
+    d = np.asarray(gain_S, float) - np.asarray(gain_T, float)
+    boots = [d[rng.integers(0, len(d), len(d))].mean() for _ in range(n_boot)]
+    lo, hi = np.percentile(boots, [2.5, 97.5])
+    return {"interaction": float(d.mean()), "ci": [float(lo), float(hi)], "n": int(len(d))}

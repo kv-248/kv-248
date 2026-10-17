@@ -125,16 +125,19 @@ def test_remedy_eval_script(tiny_config, geneval_file, tmp_path):
     its = load_geneval(geneval_file)
     pe.write_text(json.dumps({i.prompt: "a detailed photo, " + i.prompt for i in its}))
     out = _run("remedy_eval.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
-               "--geneval-meta", geneval_file, "--methods", "seeds", "pink", "pe", "teacher", "--k", "2",
-               "--n-ref", "3", "--pe-rewrites", str(pe), "--device", "cpu", "--dtype", "float32",
-               "--out", str(tmp_path / "e5"))
+               "--geneval-meta", geneval_file, "--methods", "seeds", "pink", "tags", "pe", "teacher", "--k", "2",
+               "--n-ref", "8", "--coverage-k", "2", "--pe-rewrites", str(pe), "--pe-latency-s", "1.5",
+               "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path / "e5"))
     s = json.loads((tmp_path / "e5" / "summary.json").read_text())
-    assert set(s) == {"seeds", "pink", "pe", "teacher"} and 0 <= s["pink"]["teacher_coverage"] <= 1
+    assert set(s) == {"seeds", "pink", "tags", "pe", "teacher"} and s["pe"]["latency_s"] >= 1.5
     assert "reword" not in out
 
 
 def test_reword_and_injection_parsing():
-    from dap.reword import attribute_injection, reword_k
+    from dap.reword import attribute_injection, reword_k, reword_system, tag_k
+
+    assert "composition" not in reword_system(4, composition=False) and "explicitly" not in reword_system(4, binding=False)
+    assert len(set(tag_k("a cat", 4))) == 4
 
     llm = ScriptedLLM(['["a cat on the left, a dog on the right", "seen from above: a cat and a dog"]',
                        "[false, true]"])
@@ -164,8 +167,9 @@ def test_reword_evolve_population(tiny_config, geneval_file, tmp_path):
     pop = select_population(res, 3)
     assert len(pop) == min(3, len(res.history)) and len({c.prompt for c in pop}) == len(pop)
     _run("remedy_eval.py", "--family", "tiny", "--student", "tiny-student", "--config", tiny_config,
-         "--geneval-meta", geneval_file, "--methods", "seeds", "reword", "expand", "para", "evolve", "--k", "2",
-         "--n-ref", "2", "--search-judge", "mock", "--evolve-images", "4", "--llm", "echo",
+         "--geneval-meta", geneval_file, "--methods", "seeds", "seeds_eq", "reword", "reword_iid", "reword_plain",
+         "expand", "para", "evolve", "teacher_reword", "--k", "2", "--n-ref", "4", "--coverage-k", "2",
+         "--search-judge", "mock", "--evolve-images", "4", "--llm", "echo", "--checker-llm", "echo",
          "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path / "e5e"))
     s = json.loads((tmp_path / "e5e" / "summary.json").read_text())
-    assert set(s) == {"seeds", "reword", "expand", "para", "evolve"} and s["reword"]["injection_rate"] == 0.0
+    assert {"seeds_eq", "reword_iid", "teacher_reword", "evolve"} <= set(s) and s["reword"]["injection_strict"] == 0.0

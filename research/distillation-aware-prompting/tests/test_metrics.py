@@ -147,3 +147,38 @@ def test_random_effects_fit_separates_sharpening_from_prompt_noise():
     succ = rng.uniform(size=(400, 32)) < qT[:, None]
     ctl = self_split_control(succ)
     assert abs(ctl["beta"] - 1) < 0.2 and ctl["sigma"] < 0.4, ctl
+
+
+def test_pareto_front_keeps_per_item_specialists():
+    from dap.evolve import Candidate, pareto_front
+
+    def cand(probs):
+        return Candidate("p", "x", None, [0], scores=[{"probs": probs, "soft": float(np.mean(probs)), "success": False,
+                                                        "failed": []}])
+
+    cands = [cand([0.9, 0.1]), cand([0.1, 0.9]), cand([0.5, 0.5]), cand([0.05, 0.05])]
+    assert sorted(pareto_front(cands)) == [0, 1, 2]
+
+
+def test_knn_coverage_and_interaction():
+    from dap.metrics import knn_coverage, paired_interaction_ci
+
+    rng = np.random.default_rng(7)
+    centers = np.eye(4) * 5
+    real = np.concatenate([c + rng.normal(0, 0.3, (10, 4)) for c in centers])
+    one_mode = centers[0] + rng.normal(0, 0.3, (4, 4))
+    all_modes = centers + rng.normal(0, 0.3, (4, 4))
+    assert knn_coverage(real, all_modes) > knn_coverage(real, one_mode) + 0.4
+    r = paired_interaction_ci(np.full(100, 0.1) + rng.normal(0, 0.05, 100), np.zeros(100))
+    assert r["ci"][0] > 0.05
+
+
+def test_predict_scaling_select_and_sigma():
+    from dap.metrics import predict_scaling
+
+    rng = np.random.default_rng(8)
+    cT = rng.binomial(16, rng.beta(0.6, 0.5, 300))
+    p0 = predict_scaling(cT, 16, 1.0, 0.0, 1.0, [1, 8], sigma=0.0)
+    p1 = predict_scaling(cT, 16, 1.0, 0.0, 1.0, [1, 8], sigma=1.5)
+    gain = lambda p: p["student"]["select"][8] - p["student"]["select"][1]  # noqa: E731
+    assert gain(p1) > gain(p0)  # re-addressing (sigma) also favours the wording axis
