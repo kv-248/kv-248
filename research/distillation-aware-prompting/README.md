@@ -1,9 +1,11 @@
 # Reword, Don't Reseed: pilot code
 
-Code for the experiments in [`PROPOSAL.md`](PROPOSAL.md) (v2). It compares step-distilled
-diffusion/flow students with their own teachers prompt by prompt: it estimates the tempered-teacher
-law logit q_S = beta*logit q_T + b + sigma*eps with a judge-calibrated random-effects model, measures
-whether variation lives in the seed or in the wording, and evaluates the Reword-K remedy against
+Code for the experiments in [`PROPOSAL.md`](PROPOSAL.md) (v3). A teacher is fixed and prompt evolution
+is studied across its distilled students: the **reach ledger** asks which teacher-reachable intents a
+student renders reliably as worded, can be made reliable by rewording or evolution, or reaches only by a
+lucky seed; the **tempered-teacher law** logit q_S = beta*logit q_T + b_task + sigma*eps (within-task,
+judge-calibrated random-effects fit, with CFG / preference / sibling controls) explains and predicts it;
+and **distillation-aware prompt evolution** (Reword-K as its zero-feedback corner) is compared with
 noise-side and prompt-side baselines at equal wall-clock.
 
 | Module | What it does |
@@ -17,6 +19,7 @@ noise-side and prompt-side baselines at equal wall-clock.
 | `dap/reword.py` | **Reword-K** (K jointly diverse, intent-preserving rewordings in one LLM call), generic K-expansion control, attribute-injection check. |
 | `dap/evolve.py` | DAPE test-time loop with NFE budget, early stopping, optional teacher-reference precision term and facility-location prompt-mixture selection (`coverage_subset`). |
 | `dap/search.py` | Compute-matched baselines: noise best-of-N, paraphrase best-of-N, DAPE. |
+| `scripts/reach_ledger.py` | **Main figure**: per-student reach ledger (original / Reword-K / evolution / reseed-only / lost), winners verified on fresh seeds by a held-out judge, injection-filtered. |
 | `scripts/sharpening.py` | **E1**: per-prompt success over seeds for a teacher and its students; (β, σ) with bootstrap CIs, binomial/beta-binomial brackets, pass@k, teacher self-split and CFG-matched-teacher controls (`--teacher-cfgs`), per-model judge confusion (`--judge-eps`, `--judge-eps-student`). Saves images in the GenEval layout. |
 | `scripts/variance.py` | **E2 grid**: wording × seed grids per model (embeddings, success, soft scores), variance decomposition, seed-set vs wording-set diversity. |
 | `scripts/portability.py` | E2 analysis: wording-rank transfer, proxy regret, seed-rank transfer and same-seed image coupling (student vs teacher). |
@@ -71,7 +74,7 @@ CPU-only; they build a randomly initialised tiny SDXL pipeline from config files
 download) and check generation, NFE accounting, evolution, and all three scripts end to end.
 
 ```bash
-pytest -q tests          # 24 tests, ~3 min on CPU
+pytest -q tests          # 31 tests, ~5 min on CPU
 ```
 
 Entries marked `verify: true` in `configs/families.yaml` need their checkpoint filenames and

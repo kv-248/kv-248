@@ -181,3 +181,14 @@ def test_reword_evolve_population(tiny_config, geneval_file, tmp_path):
          "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path / "e5e"))
     s = json.loads((tmp_path / "e5e" / "summary.json").read_text())
     assert {"seeds_eq", "reword_iid", "teacher_reword", "evolve"} <= set(s) and s["reword"]["injection_strict"] == 0.0
+
+
+def test_reach_ledger_script(tiny_config, geneval_file, tmp_path):
+    _run("reach_ledger.py", "--family", "tiny", "--config", tiny_config, "--geneval-meta", geneval_file,
+         "--llm", "echo", "--checker-llm", "echo", "--search-judge", "mock", "--eval-judge", "mock",
+         "--ref-seeds", "3", "--n-seeds", "3", "--fresh-seeds", "2", "--k", "2", "--evolve-images", "3",
+         "--device", "cpu", "--dtype", "float32", "--out", str(tmp_path / "ledger"))
+    s = json.loads((tmp_path / "ledger" / "summary.json").read_text())
+    assert set(s) == {"tiny-teacher", "tiny-student"}
+    for v in s.values():
+        assert abs(sum(v["share"].values()) - (1.0 if v["n"] else 0.0)) < 1e-9
