@@ -420,7 +420,7 @@
   "persona": "Mutual fund distributors (MFDs) in a live training session run by a fintech (FinApp) - client portfolio review and rebalancing on a CAS",
   "video_id": "p_m2DCJi520",
   "url": "https://www.youtube.com/watch?v=p_m2DCJi520",
-  "title": "How to Review a Client\u2019s Mutual Fund Portfolio ? | Live MFD Demo (FinApp)",
+  "title": "How to Review a Client’s Mutual Fund Portfolio ? | Live MFD Demo (FinApp)",
   "channel": "FinApp by Pulselabs",
   "duration": "1:41:11",
   "upload_date": "20261010",
@@ -1626,7 +1626,7 @@
   "persona": "Local fiscal-health analyst (Strong Towns Finance Decoder volunteer/staff) transcribing a US county ACFR into a standard ratio template",
   "video_id": "yAbiyx0cgM8",
   "url": "https://www.youtube.com/watch?v=yAbiyx0cgM8",
-  "title": "Let's Insert the Numbers USA \ud83e\udd85 (Part 5) | Finance Decoder Tutorial",
+  "title": "Let's Insert the Numbers USA 🦅 (Part 5) | Finance Decoder Tutorial",
   "channel": "Strong Towns Library",
   "duration": "16:17",
   "upload_date": "20250822",
@@ -2314,7 +2314,7 @@
   "persona": "Employer finance staff (city/district accountant) preparing GASB 68 entries; presented by CalPERS Financial Reporting & Accounting Services",
   "video_id": "lrorAMC4JJs",
   "url": "https://www.youtube.com/watch?v=lrorAMC4JJs",
-  "title": "CalPERS GASB 68 Employer Tool Instructions \u2013 2017",
+  "title": "CalPERS GASB 68 Employer Tool Instructions – 2017",
   "channel": "CalPERS",
   "duration": "21:16",
   "upload_date": "20171002",
@@ -2484,7 +2484,7 @@
   "persona": "CalPERS actuarial office (actuaries Julian Robinson, Kurt Schneider; Deputy Chief Actuary Randy Dziubek) advising public-agency employers on paying down UAL",
   "video_id": "jhPxGjreVrI",
   "url": "https://www.youtube.com/watch?v=jhPxGjreVrI",
-  "title": "Proactively Managing Your Pension Plan\u2019s Unfunded Liability",
+  "title": "Proactively Managing Your Pension Plan’s Unfunded Liability",
   "channel": "CalPERS",
   "duration": "58:29",
   "upload_date": "20180605",
@@ -3444,7 +3444,7 @@
   "why_useful": "Rare depiction of the FP&A loop as a repeated monthly cycle over a year (actuals -> variance -> commentary -> reforecast -> lock -> roll forward), including versioning and a final model audit - directly the long-horizon structure a benchmark needs.",
   "transcript_read": true,
   "url": "https://www.youtube.com/watch?v=6yplTX1cm1A",
-  "title": "Rolling Forecast & Monthly FP&A Cycle \u2014 Performance Analysis, Reforecasting & Model Control",
+  "title": "Rolling Forecast & Monthly FP&A Cycle — Performance Analysis, Reforecasting & Model Control",
   "channel": "Mohmoud Farag",
   "duration": "42:17",
   "upload_date": "20260730",
@@ -3669,7 +3669,7 @@
    },
    {
     "t": "08:11",
-    "step": "Set up blank sheet (dates via EOMONTH, FY formats) and link income statement lines to the raw export"
+    "step": "Set up blank sheet (fiscal-year dates and formats) and link income statement lines to the raw export"
    },
    {
     "t": "13:40",
@@ -3701,7 +3701,7 @@
    },
    {
     "t": "57:51",
-    "step": "Cash flow projections: CapEx, D&A, pensions/other as % revenue; M&A at midpoint of $50-100m guidance; dividends at 35-40% payout from guidance"
+    "step": "Cash flow projections: CapEx, D&A, pensions/other as % of revenue; acquisitions and dividends from company guidance (stated payout ratio)"
    },
    {
     "t": "67:12",
