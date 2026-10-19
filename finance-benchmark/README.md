@@ -27,6 +27,7 @@ workflow sketches). Workflows will later be curated by finance experts. Here we 
 | `docs/02_concept_library.md` | Plug-and-play finance concepts (A–K families) and how they compose into long workflows |
 | `docs/03_source_catalog.md` | **Main deliverable:** ranked catalog of real data sources, scored for long-horizon scope, with workflow sketches |
 | `docs/04_poc_results.md` | What we actually pulled in the sandbox and the natural ground-truth checks that held |
+| `docs/05_top10_resources.md` | Top 10 sources: links, workflows, caveats (web view: https://claude.ai/artifact/SXFq2qdnq8UXEpiVb38SrD) |
 | `docs/sources/*.md` | Raw per-slice research notes (funds, public finance, credit/distressed, corporate/accounting/markets) |
 | `poc/` | Pull + validation scripts (stdlib + pandas/pyarrow) |
 | `samples/` | Small env seeds (xlsx) + validation reports produced by the PoCs |
