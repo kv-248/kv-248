@@ -1,0 +1,9 @@
+# An ops agent about to do something it cannot undo, on the strength of a guess.
+def $STG := the staging Postgres instance named in .env.staging
+
+s1 goal free disk on $STG, which is at 97%
+s2 obs  table events_archive holds 410 GB of the 450 GB in use    <- s1
+s3 asm  events_archive is a disposable copy that is also kept in S3  ~0.5
+s4 plan drop events_archive                                       <- s1 s2 s3
+s5 exp  disk use on $STG falls below 20%                          <- s4
+s6 act! DROP TABLE events_archive                                 <- s4

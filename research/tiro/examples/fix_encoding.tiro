@@ -1,0 +1,19 @@
+# A coding agent fixing a failing test.
+# Coined terms are allowed, but must be declared before use.
+def $RT := src/io.py::read_text, the function under test
+def $TR := tests/test_io.py::test_read
+
+s1  goal make $TR pass without breaking other tests
+s2  cons do not change any public function signature
+s3  obs  $TR fails: UnicodeDecodeError on fixtures/utf8.txt
+s4  hyp  $RT opens the file with the platform default encoding  <- s3 ~0.6
+s5  chk  read the source of $RT                                  <- s4
+s6  obs  line 42 calls open(path) with no encoding argument      <- s5
+s7  inf  s4 holds                                                <- s4 s6 ~0.9
+s8  plan pass encoding="utf-8" to open() inside $RT              <- s1 s2 s7
+s9  exp  $TR passes and every other test is unchanged            <- s8
+s10 act  edit src/io.py line 42                                  <- s8
+s11 act  run the full test suite                                 <- s9 s10
+s12 obs  $TR passes; test_write_legacy now fails                 <- s11
+s13 rev  s9 was wrong: test_write_legacy reads a latin-1 fixture through $RT  <- s9 s12
+s14 ask  should $RT stay utf-8 and the legacy fixture be re-encoded, or should $RT fall back to latin-1?  <- s2 s13
